@@ -387,8 +387,18 @@
   </div>
 
   <script>
-    // Sample data for demonstration (replace with your actual fetch)
-    const sampleData = [
+
+  function loadMaps() {
+    fetch("beatmaps.json")
+      .then(r => r.json())
+      .then(data => {
+        const byTier = { mid: {}, high: {} };
+        data.forEach(m => {
+          const tier = m.slot.startsWith("H") ? "high" : "mid";
+          const slotDisplay = m.slot.startsWith("H") ? m.slot.substring(1) : m.slot;
+          if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
+          byTier[tier][m.mod].push({ ...m, slotDisplay });
+        });
       {
         slot: "NM1",
         mod: "NoMod",

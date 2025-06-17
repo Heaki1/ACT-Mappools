@@ -487,26 +487,17 @@
       }
     ];
 
-    function loadMaps() {
-      // Replace this with your actual fetch
-      // fetch("beatmaps.json")
-      //   .then(r => r.json())
-      //   .then(data => {
-      
-      setTimeout(() => {
-        fetch("beatmaps.json")
-  .then(r => r.json())
-  .then(data => {
-        
-        const byTier = { mid: {}, high: {} };
-        
-        data.forEach(m => {
-          const tier = m.slot.startsWith("H") ? "high" : "mid";
-          const slotDisplay = m.slot.startsWith("H") ? m.slot.substring(1) : m.slot;
-          
-          if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
-          byTier[tier][m.mod].push({ ...m, slotDisplay });
-        });
+function loadMaps() {
+  fetch("beatmaps.json")
+    .then(r => r.json())
+    .then(data => {
+      const byTier = { mid: {}, high: {} };
+      data.forEach(m => {
+        const tier = m.slot.startsWith("H") ? "high" : "mid";
+        const slotDisplay = m.slot.startsWith("H") ? m.slot.substring(1) : m.slot;
+        if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
+        byTier[tier][m.mod].push({ ...m, slotDisplay });
+      });
 
         // Define mod order
         const modOrder = ['NoMod', 'Hidden', 'DT', 'HR', 'FM', 'TB'];

@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mappool Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0e0e10;
+      color: #ffffff;
+    }
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 10px;
+      background-size: cover;
+      background-position: center;
+    }
+    audio#previewPlayer {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Mid Tier</h2>
+    <div id="midModSections"></div>
+    <h2>High Tier</h2>
+    <div id="highModSections"></div>
+  </div>
+
+  <script>
+    fetch("beatmaps.json")
+      .then(r => r.json())
+      .then(data => {
+        const byTier = { mid: {}, high: {} };
+        data.forEach(m => {
+          const tier = m.slot.startsWith("H") ? "high" : "mid";
+          const slotDisplay = m.slot.startsWith("H") ? m.slot.substring(1) : m.slot;
+          if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
+          byTier[tier][m.mod].push({ ...m, slotDisplay });
+        });
+
+        for (const tier in byTier) {
+          const container = document.getElementById(tier + "ModSections");
+          for (const mod in byTier[tier]) {
+            const section = document.createElement("div");
+            section.innerHTML = `<h3>${mod}</h3>`;
+            byTier[tier][mod].forEach(m => {
+              const div = document.createElement("div");
+              div.className = "card";
+              div.style.backgroundImage = `url('${m.cover_url || ""}')`;
+              div.innerHTML = `
+                <strong>${m.slotDisplay}</strong>: 
+                <a href="${m.url}" target="_blank">${m.title}</a>
+                <button onclick="playPreview('${m.preview_url || ""}')" style="margin-left:10px; background:#222; border:none; color:#fff; padding:4px 8px; border-radius:5px; cursor:pointer;">🔊</button>
+              `;
+              section.appendChild(div);
+            });
+            container.appendChild(section);
+          }
+        }
+      });
+
+    function playPreview(url) {
+      if (!url) return alert("No preview available.");
+      const existing = document.getElementById("previewPlayer");
+      if (existing) {
+        existing.pause();
+        existing.remove();
+      }
+      const audio = document.createElement("audio");
+      audio.id = "previewPlayer";
+      audio.src = url;
+      audio.autoplay = true;
+      audio.controls = true;
+      document.body.appendChild(audio);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" href="data:,">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mappool Viewer</title>
+  <style>
+    body { background-color: #0f0f0f; color: white; font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: auto; padding: 2rem; }
+    h1 { text-align: center; color: #66ccff; }
+    .loading { text-align: center; color: #aaa; margin-top: 2rem; }
+    .tier { margin-top: 2rem; }
+    .mod-section { margin-bottom: 2rem; }
+    .card { background: #1e1e1e; border: 1px solid #444; border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+    .card-title a { color: #66ccff; text-decoration: none; font-weight: bold; }
+    .card-stats { display: flex; gap: 1rem; font-size: 0.9rem; margin-top: 0.5rem; }
+    .stat { background: #333; padding: 0.3rem 0.6rem; border-radius: 5px; }
+    .slot-badge { background: #ff6b6b; color: #fff; padding: 0.2rem 0.6rem; border-radius: 5px; font-size: 0.8rem; }
+    .skill-tag { display: inline-block; margin-top: 0.5rem; padding: 0.3rem 0.6rem; background: #4ecdc4; border-radius: 5px; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mappool Viewer</h1>
+    <div id="loading" class="loading">Loading beatmaps...</div>
+    <div id="content" style="display:none;">
+      <div id="midTier" class="tier">
+        <h2>Mid Tier</h2>
+        <div id="midModSections"></div>
+      </div>
+      <div id="highTier" class="tier">
+        <h2>High Tier</h2>
+        <div id="highModSections"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function loadMaps() {
+      fetch("beatmaps.json")
+        .then(r => r.json())
+        .then(data => {
+          const byTier = { mid: {}, high: {} };
+          data.forEach(m => {
+            const tier = m.slot.startsWith("H") ? "high" : "mid";
+            const slotDisplay = m.slot.startsWith("H") ? m.slot.substring(1) : m.slot;
+            if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
+            byTier[tier][m.mod].push({ ...m, slotDisplay });
+          });
+
+          const modOrder = ['NoMod', 'Hidden', 'DT', 'HR', 'FM', 'TB'];
+          for (const tier in byTier) {
+            const container = document.getElementById(tier + "ModSections");
+            const sortedMods = Object.keys(byTier[tier]).sort((a, b) => {
+              const aIndex = modOrder.indexOf(a);
+              const bIndex = modOrder.indexOf(b);
+              return aIndex === -1 ? 1 : bIndex === -1 ? -1 : aIndex - bIndex;
+            });
+
+            for (const mod of sortedMods) {
+              const section = document.createElement("div");
+              section.className = "mod-section";
+              section.innerHTML = `<h3>${mod}</h3>`;
+              byTier[tier][mod].forEach(m => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                  <div class="card-header">
+                    <span class="slot-badge">${m.slotDisplay}</span>
+                    <span class="card-title"><a href="${m.url}" target="_blank">${m.title}</a>
+                      <button onclick="playPreview('${m.preview_url || ''}')" style="margin-left:10px;">🔊</button>
+                    </span>
+                  </div>
+                  <div class="card-stats">
+                    <div class="stat">★ ${m.stars}</div>
+                    <div class="stat">CS ${m.cs}</div>
+                    <div class="stat">AR ${m.ar}</div>
+                    <div class="stat">OD ${m.od}</div>
+                    <div class="stat">BPM ${m.bpm}</div>
+                  </div>
+                  <div class="skill-tag">${m.skill}</div>
+                `;
+                section.appendChild(card);
+              });
+              container.appendChild(section);
+            }
+          }
+
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("content").style.display = "block";
+        });
+    }
+
+    function playPreview(url) {
+      if (!url) return alert("No preview available.");
+      const existing = document.getElementById("previewPlayer");
+      if (existing) {
+        existing.pause();
+        existing.remove();
+      }
+      const audio = document.createElement("audio");
+      audio.id = "previewPlayer";
+      audio.src = url;
+      audio.autoplay = true;
+      audio.controls = true;
+      audio.style.position = "fixed";
+      audio.style.bottom = "20px";
+      audio.style.left = "20px";
+      audio.style.zIndex = 1000;
+      document.body.appendChild(audio);
+    }
+
+    loadMaps();
+  </script>
+</body>
+</html>

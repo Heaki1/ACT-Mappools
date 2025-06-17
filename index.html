@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mappool Viewer</title>
+  <style>
+    body { background: #111; color: #fff; font-family: sans-serif; padding: 20px; }
+    h1, h2 { color: #66ccff; }
+    .tier { margin-bottom: 40px; }
+    .mod-section { margin-bottom: 20px; }
+    .card {
+      background: #1e1e1e; border: 1px solid #333; padding: 10px; margin: 5px 0;
+      border-radius: 8px;
+    }
+    .card:hover { background: #222; }
+    a { color: #66ccff; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <h1>Mappool Viewer</h1>
+  <div id="midTier" class="tier"><h2>Mid Tier</h2></div>
+  <div id="highTier" class="tier"><h2>High Tier</h2></div>
+
+  <script>
+    fetch("beatmaps.json")
+      .then(r => r.json())
+      .then(data => {
+        const byTier = { mid: {}, high: {} };
+        data.forEach(m => {
+          const tier = m.slot.includes("H") ? "high" : "mid";
+          if (!byTier[tier][m.mod]) byTier[tier][m.mod] = [];
+          byTier[tier][m.mod].push(m);
+        });
+
+        for (const tier in byTier) {
+          const tierDiv = document.getElementById(tier + "Tier");
+          for (const mod in byTier[tier]) {
+            const sec = document.createElement("div");
+            sec.className = "mod-section";
+            sec.innerHTML = `<h3>${mod}</h3>`;
+            byTier[tier][mod].forEach(m => {
+              const displaySlot = m.slot.replace(/^H/, "");
+              const div = document.createElement("div");
+              div.className = "card";
+              div.innerHTML = `<strong>${displaySlot}</strong>: <a href="${m.url}" target="_blank">${m.title}</a>
+              <br>⭐ ${m.stars} | CS ${m.cs} | AR ${m.ar} | OD ${m.od} | BPM ${m.bpm} | ${m.skill}`;
+              sec.appendChild(div);
+            });
+            tierDiv.appendChild(sec);
+          }
+        }
+      });
+  </script>
+</body>
+</html>

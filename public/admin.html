@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mappool Admin</title>
+  <style>
+    body { background: #121212; color: #eee; font-family: Arial; padding: 20px; }
+    h1 { color: #66ccff; }
+    label { display: block; margin-top: 10px; }
+    input, select, button {
+      width: 100%; max-width: 500px; padding: 8px; margin: 5px 0;
+      background: #1e1e1e; color: #eee; border: 1px solid #444;
+    }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    th, td { padding: 8px; border: 1px solid #333; }
+    tr:nth-child(even) { background: #1b1b1b; }
+    .btn { background: #66ccff; color: black; font-weight: bold; cursor: pointer; }
+    .btn:hover { background: #3399cc; }
+  </style>
+</head>
+<body>
+  <h1>Mappool Admin</h1>
+
+  <label>Mod</label>
+  <select id="mod">
+    <option value="NM">NM</option>
+    <option value="HD">HD</option>
+    <option value="HR">HR</option>
+    <option value="DT">DT</option>
+    <option value="FM">FM</option>
+    <option value="TB">TB</option>
+  </select>
+
+  <label>Slot</label>
+  <input type="text" id="slot" placeholder="e.g. NM1" />
+
+  <label>Beatmap URL</label>
+  <input type="text" id="url" onblur="autofillFromURL()" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." />
+
+  <label>Skill Type</label>
+  <input type="text" id="skill" placeholder="e.g. Aim / Tech" />
+
+  <label>Title</label>
+  <input type="text" id="title" readonly />
+
+  <label>Stars</label>
+  <input type="text" id="stars" readonly />
+  <label>CS</label><input type="text" id="cs" readonly />
+  <label>AR</label><input type="text" id="ar" readonly />
+  <label>OD</label><input type="text" id="od" readonly />
+  <label>BPM</label><input type="text" id="bpm" readonly />
+  <input type="hidden" id="preview_url" />
+  <input type="hidden" id="cover_url" />
+
+  <button class="btn" onclick="addBeatmap()">➕ Add</button>
+  <button class="btn" onclick="downloadJSON()">💾 Download JSON</button>
+  <input type="file" id="fileLoader" onchange="loadFile(event)" />
+
+  <table id="preview">
+    <thead>
+      <tr><th>Mod</th><th>Slot</th><th>Skill</th><th>Title</th><th>Stars</th><th>Actions</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let beatmaps = [];
+
+    function extractId(url) {
+      const match = url.match(/osu\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function autofillFromURL() {
+      const id = extractId(document.getElementById("url").value);
+      if (!id) return;
+      fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById("title").value = d.title;
+          document.getElementById("stars").value = d.stars;
+          document.getElementById("cs").value = d.cs;
+          document.getElementById("ar").value = d.ar;
+          document.getElementById("od").value = d.od;
+          document.getElementById("bpm").value = d.bpm;
+          document.getElementById("preview_url").value = d.preview_url || "";
+          document.getElementById("cover_url").value = d.cover_url || "";
+        })
+        .catch(() => alert("Failed to fetch beatmap info."));
+    }
+
+    function addBeatmap() {
+      const entry = {
+        mod: document.getElementById("mod").value,
+        slot: document.getElementById("slot").value,
+        skill: document.getElementById("skill").value,
+        title: document.getElementById("title").value,
+        stars: document.getElementById("stars").value,
+        cs: document.getElementById("cs").value,
+        ar: document.getElementById("ar").value,
+        od: document.getElementById("od").value,
+        bpm: document.getElementById("bpm").value,
+        url: document.getElementById("url").value,
+        preview_url: document.getElementById("preview_url").value,
+        cover_url: document.getElementById("cover_url").value
+      };
+      beatmaps.push(entry);
+      renderTable();
+    }
+
+    function deleteMap(index) {
+      beatmaps.splice(index, 1);
+      renderTable();
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector("#preview tbody");
+      tbody.innerHTML = "";
+      beatmaps.forEach((m, i) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${m.mod}</td><td>${m.slot}</td><td>${m.skill}</td>
+          <td><a href="${m.url}" target="_blank">${m.title}</a></td>
+          <td>${m.stars}</td>
+          <td><button onclick="deleteMap(${i})">❌</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function downloadJSON() {
+      const blob = new Blob([JSON.stringify(beatmaps, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "beatmaps.json";
+      a.click();
+    }
+
+    function loadFile(e) {
+      const reader = new FileReader();
+      reader.onload = function() {
+        beatmaps = JSON.parse(reader.result);
+        renderTable();
+      };
+      reader.readAsText(e.target.files[0]);
+    }
+  </script>
+</body>
+</html>

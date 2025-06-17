@@ -1,0 +1,30 @@
+[
+  {
+    "mod": "HD",
+    "slot": "HD1",
+    "skill": "low ar",
+    "title": "Hyadain - Hyadain no Kakakata * Kataomoi-C (TV Size) (KaguraKR)",
+    "stars": "5.1★",
+    "cs": "4",
+    "ar": "9.4",
+    "od": "8.7",
+    "bpm": "180",
+    "url": "https://osu.ppy.sh/beatmapsets/2381259#osu/5147935",
+    "preview_url": "//b.ppy.sh/preview/2381259.mp3",
+    "cover_url": "https://assets.ppy.sh/beatmaps/2381259/covers/card.jpg?1749554420"
+  },
+  {
+    "mod": "NM",
+    "slot": "NM2",
+    "skill": "stream",
+    "title": "Victorius - Age of Tyranny (Urition)",
+    "stars": "6.8★",
+    "cs": "3.3",
+    "ar": "9.5",
+    "od": "9.4",
+    "bpm": "200",
+    "url": "https://osu.ppy.sh/beatmapsets/2219231#osu/4706384",
+    "preview_url": "//b.ppy.sh/preview/2219231.mp3",
+    "cover_url": "https://assets.ppy.sh/beatmaps/2219231/covers/card.jpg?1739205113"
+  }
+]

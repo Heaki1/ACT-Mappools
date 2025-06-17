@@ -1,10 +1,15 @@
-const cors = require('cors');
-app.use(cors());
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // 🔒 Replace these with your actual osu! API credentials
 const client_id = '41700';

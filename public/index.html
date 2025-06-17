@@ -388,8 +388,11 @@
 
   <script>
     // Sample data for demonstration (replace with your actual fetch)
-    const sampleData = [
-      {
+    fetch("beatmaps.json")
+  .then(r => r.json())
+  .then(data => 
+        {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "NM1",
         mod: "NoMod",
         title: "Sample Map 1",
@@ -402,6 +405,7 @@
         skill: "Speed"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "NM2",
         mod: "NoMod",
         title: "Sample Map 2",
@@ -414,6 +418,7 @@
         skill: "Streams"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "NM3",
         mod: "NoMod",
         title: "Sample Map 3",
@@ -426,6 +431,7 @@
         skill: "Jumps"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HD1",
         mod: "Hidden",
         title: "Hidden Sample 1",
@@ -438,6 +444,7 @@
         skill: "Reading"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HD2",
         mod: "Hidden",
         title: "Hidden Sample 2",
@@ -450,6 +457,7 @@
         skill: "Flow"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HNM1",
         mod: "NoMod",
         title: "High Tier Sample 1",
@@ -462,6 +470,7 @@
         skill: "Aim"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HNM2",
         mod: "NoMod",
         title: "High Tier Sample 2",
@@ -474,6 +483,7 @@
         skill: "Speed"
       },
       {
+<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HHD1",
         mod: "Hidden",
         title: "High Hidden Sample",
@@ -493,8 +503,9 @@
       //   .then(r => r.json())
       //   .then(data => {
       
-      setTimeout(() => {
-        const data = sampleData;
+    fetch("beatmaps.json")
+  .then(r => r.json())
+  .then(data => {
         
         const byTier = { mid: {}, high: {} };
         

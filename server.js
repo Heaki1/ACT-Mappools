@@ -51,16 +51,15 @@ app.get('/api/beatmap/:id', async (req, res) => {
 
     const bm = response.data;
     const data = {
-      id: bm.id,
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
       stars: `${bm.difficulty_rating.toFixed(1)}★`,
       cs: bm.cs,
       ar: bm.ar,
       od: bm.accuracy,
-      bpm: bm.bpm,
-      url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`
+      bpm: bm.bpm,  // ✅ COMMA HERE!
+      url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
-      cover_url: bm.beatmapset.covers.card,
+      cover_url: bm.beatmapset.covers.card
     };
 
     res.json(data);

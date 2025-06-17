@@ -388,11 +388,8 @@
 
   <script>
     // Sample data for demonstration (replace with your actual fetch)
-    fetch("beatmaps.json")
-  .then(r => r.json())
-  .then(data => 
-        {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
+    const sampleData = [
+      {
         slot: "NM1",
         mod: "NoMod",
         title: "Sample Map 1",
@@ -405,7 +402,6 @@
         skill: "Speed"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "NM2",
         mod: "NoMod",
         title: "Sample Map 2",
@@ -418,7 +414,6 @@
         skill: "Streams"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "NM3",
         mod: "NoMod",
         title: "Sample Map 3",
@@ -431,7 +426,6 @@
         skill: "Jumps"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HD1",
         mod: "Hidden",
         title: "Hidden Sample 1",
@@ -444,7 +438,6 @@
         skill: "Reading"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HD2",
         mod: "Hidden",
         title: "Hidden Sample 2",
@@ -457,7 +450,6 @@
         skill: "Flow"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HNM1",
         mod: "NoMod",
         title: "High Tier Sample 1",
@@ -470,7 +462,6 @@
         skill: "Aim"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HNM2",
         mod: "NoMod",
         title: "High Tier Sample 2",
@@ -483,7 +474,6 @@
         skill: "Speed"
       },
       {
-<button onclick="playPreview('${m.preview_url || ''}')">🔊</button>
         slot: "HHD1",
         mod: "Hidden",
         title: "High Hidden Sample",
@@ -503,9 +493,8 @@
       //   .then(r => r.json())
       //   .then(data => {
       
-    fetch("beatmaps.json")
-  .then(r => r.json())
-  .then(data => {
+      setTimeout(() => {
+        const data = sampleData;
         
         const byTier = { mid: {}, high: {} };
         
@@ -553,7 +542,7 @@
                 <div class="card-header">
                   <div class="slot-badge">${m.slotDisplay}</div>
                   <div class="card-title">
-                    <a href="${m.url}" target="_blank">${m.title}</a>
+                    <a href="${m.url}" target="_blank">${m.title}</a><button onclick="playPreview('${m.preview_url || ''}')" style="margin-left: 10px;">🔊</button>
                   </div>
                 </div>
                 <div class="card-stats">
@@ -596,6 +585,23 @@
     }
 
     loadMaps();
-  </script>
+  
+function playPreview(url) {
+  if (!url) return alert("No preview available.");
+  const existing = document.getElementById("previewPlayer");
+  if (existing) existing.remove();
+  const audio = document.createElement("audio");
+  audio.id = "previewPlayer";
+  audio.src = url;
+  audio.autoplay = true;
+  audio.controls = true;
+  audio.style.position = "fixed";
+  audio.style.bottom = "20px";
+  audio.style.left = "20px";
+  audio.style.zIndex = 1000;
+  document.body.appendChild(audio);
+}
+
+</script>
 </body>
 </html>

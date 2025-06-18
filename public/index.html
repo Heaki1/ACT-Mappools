@@ -367,8 +367,6 @@
   </div>
 
   <div class="controls">
-    <button class="control-btn" onclick="loadSample()" title="Sample Data">📊</button>
-    <button class="control-btn" onclick="document.getElementById('file').click()" title="Load JSON">📁</button>
     <input type="file" id="file" accept=".json" style="display:none" onchange="loadFile(event)">
   </div>
 
@@ -427,7 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update stats
       const total = data.length;
-      const avgStars = (data.reduce((s, m) => s + parseFloat(m.stars), 0) / total).toFixed(1);
+      const avgStars = (
+  data
+    .map(m => parseFloat(String(m.stars).replace(/[^\d.]/g, '')))
+    .filter(n => !isNaN(n))
+    .reduce((s, n) => s + n, 0)
+  / total
+).toFixed(1);
       const mods = [...new Set(data.map(m => m.mod))].length;
       
       document.getElementById('totalMaps').textContent = total;
@@ -445,7 +449,13 @@ document.addEventListener('DOMContentLoaded', () => {
       // Render
       document.getElementById('mappool').innerHTML = Object.entries(groups)
   .map(([mod, maps]) => {
-    const avg = (maps.reduce((s, m) => s + parseFloat(m.stars), 0) / maps.length).toFixed(1);
+   const avgStars = (
+  data
+    .map(m => parseFloat(String(m.stars).replace(/[^\d.]/g, '')))
+    .filter(n => !isNaN(n))
+    .reduce((s, n) => s + n, 0)
+  / total
+).toFixed(1);
     return `
       <div class="mod-section">
         <div class="mod-header">

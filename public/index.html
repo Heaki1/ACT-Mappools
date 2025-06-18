@@ -191,8 +191,9 @@
 
 
       return `
-        <div class="map-card">
-          <div class="map-info" onclick="window.open('${map.url}', '_blank')">
+
+            <div class="map-card">
+            <div class="map-info">
             <div style="position: relative;">
               <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
               <div class="map-overlay">

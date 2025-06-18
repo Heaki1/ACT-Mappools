@@ -117,146 +117,148 @@
       return match ? match[1] : null;
     }
 
-    function fetchInfo() {
-      const id = extractId(document.getElementById("url").value);
-      const setId = extractSetId(document.getElementById("url").value);
-      if (!id) return;
+function fetchInfo() {
+  const id = extractId(document.getElementById("url").value);
+  const setId = extractSetId(document.getElementById("url").value);
+  if (!id) return;
 
-      // Add loading state
-      const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm'];
+  // Add loading state
+  const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    el.value = 'Loading...';
+    el.classList.add('loading');
+  });
+
+  fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById("title").value = d.title;
+      document.getElementById("stars").value = d.stars;
+      document.getElementById("cs").value = d.cs;
+      document.getElementById("ar").value = d.ar;
+      document.getElementById("od").value = d.od;
+      document.getElementById("bpm").value = d.bpm;
+      
+      // Store additional data for later use
+      window.currentBeatmapData = {
+        preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
+        cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
+        // Add download URL based on the beatmapset ID
+        download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`
+      };
+      
+      // Remove loading state
+      inputs.forEach(id => {
+        document.getElementById(id).classList.remove('loading');
+      });
+    })
+    .catch(() => {
+      alert("Couldn't fetch info from the beatmap URL. Please check the URL and try again.");
       inputs.forEach(id => {
         const el = document.getElementById(id);
-        el.value = 'Loading...';
-        el.classList.add('loading');
+        el.value = '';
+        el.classList.remove('loading');
       });
-
-      fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
-        .then(r => r.json())
-        .then(d => {
-          document.getElementById("title").value = d.title;
-          document.getElementById("stars").value = d.stars;
-          document.getElementById("cs").value = d.cs;
-          document.getElementById("ar").value = d.ar;
-          document.getElementById("od").value = d.od;
-          document.getElementById("bpm").value = d.bpm;
-          
-          // Store additional data for later use
-          window.currentBeatmapData = {
-            preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
-            cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`
-          };
-          
-          // Remove loading state
-          inputs.forEach(id => {
-            document.getElementById(id).classList.remove('loading');
-          });
-        })
-        .catch(() => {
-          alert("Couldn't fetch info from the beatmap URL. Please check the URL and try again.");
-          inputs.forEach(id => {
-            const el = document.getElementById(id);
-            el.value = '';
-            el.classList.remove('loading');
-          });
-          window.currentBeatmapData = null;
-        });
-    }
-
-    function addToPool() {
-      const entry = {
-        slot: document.getElementById("slot").value,
-        mod: document.getElementById("mod").value,
-        tier: document.getElementById("tier").value,
-        skill: document.getElementById("skill").value,
-        notes: document.getElementById("notes").value,
-        title: document.getElementById("title").value,
-        stars: document.getElementById("stars").value,
-        cs: document.getElementById("cs").value,
-        ar: document.getElementById("ar").value,
-        od: document.getElementById("od").value,
-        bpm: document.getElementById("bpm").value,
-        url: document.getElementById("url").value,
-        preview_url: window.currentBeatmapData?.preview_url || "/",
-        cover_url: window.currentBeatmapData?.cover_url || ""
-      };
-
-      // Validate required fields
-      if (!entry.slot || !entry.title || !entry.stars) {
-        alert("Please fill in the beatmap URL and slot before adding to pool.");
-        return;
-      }
-
-      beatmaps.push(entry);
-      renderOutput();
-      
-      // Clear form and data
-      ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el.readonly) el.value = '';
-      });
-      document.getElementById("mod").selectedIndex = 0;
       window.currentBeatmapData = null;
-    }
+    });
+}
 
-    function renderOutput() {
-      const out = document.getElementById("output");
-      const count = document.getElementById("count");
-      
-      count.textContent = beatmaps.length;
-      
-      out.innerHTML = "";
-      beatmaps.forEach((m, i) => {
-        out.innerHTML += `
-          <div class="beatmap-card">
-            ${m.cover_url && m.cover_url !== "" ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
-            
-            <div class="beatmap-header">
-              <div>
-                <span class="slot-badge">${m.slot}</span>
-                <span class="tier-badge tier-${m.tier}">${m.tier.toUpperCase()}</span>
-              </div>
-              <div style="font-size: 0.9rem; color: #94a3b8;">${m.mod}</div>
-            </div>
-            
-            <a href="${m.url}" target="_blank" class="beatmap-title" style="text-decoration: none; color: #f1f5f9; transition: color 0.3s ease;">${m.title}</a>
-            
-            <div class="beatmap-stats">
-              <div class="stat-item">
-                <span class="stat-label">Stars</span>
-                <span class="stat-value">${m.stars}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">CS</span>
-                <span class="stat-value">${m.cs}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">AR</span>
-                <span class="stat-value">${m.ar}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">OD</span>
-                <span class="stat-value">${m.od}</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">BPM</span>
-                <span class="stat-value">${m.bpm}</span>
-              </div>
-            </div>
-            
-            <div style="margin-top: 0.5rem;">
-              ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
-              ${m.notes ? `<span class="note-tag">📝 ${m.notes}</span>` : ''}
-            </div>
-            
-            <div class="beatmap-actions">
-              <button class="btn-small btn-edit" onclick="editBeatmap(${i})">✏️ Edit</button>
-              <button class="btn-small btn-delete" onclick="deleteBeatmap(${i})">🗑️ Delete</button>
-              ${m.preview_url && m.preview_url !== "/" ? `<button class="btn-small btn-preview" onclick="playPreview('${m.preview_url}')">🔊 Preview</button>` : ''}
-            </div>
+function addToPool() {
+  const entry = {
+    slot: document.getElementById("slot").value,
+    mod: document.getElementById("mod").value,
+    tier: document.getElementById("tier").value,
+    skill: document.getElementById("skill").value,
+    notes: document.getElementById("notes").value,
+    title: document.getElementById("title").value,
+    stars: document.getElementById("stars").value,
+    cs: document.getElementById("cs").value,
+    ar: document.getElementById("ar").value,
+    od: document.getElementById("od").value,
+    bpm: document.getElementById("bpm").value,
+    url: document.getElementById("url").value,
+    preview_url: window.currentBeatmapData?.preview_url || "/",
+    cover_url: window.currentBeatmapData?.cover_url || "",
+    download_url: window.currentBeatmapData?.download_url || "" // Add download URL
+  };
+
+  if (!entry.slot || !entry.title || !entry.stars) {
+    alert("Please fill in the beatmap URL and slot before adding to pool.");
+    return;
+  }
+
+  beatmaps.push(entry);
+  renderOutput();
+
+  ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el.readonly) el.value = '';
+  });
+  document.getElementById("mod").selectedIndex = 0;
+  window.currentBeatmapData = null;
+}
+
+function renderOutput() {
+  const out = document.getElementById("output");
+  const count = document.getElementById("count");
+  
+  count.textContent = beatmaps.length;
+  
+  out.innerHTML = "";
+  beatmaps.forEach((m, i) => {
+    out.innerHTML += `
+      <div class="beatmap-card">
+        ${m.cover_url && m.cover_url !== "" ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
+        
+        <div class="beatmap-header">
+          <div>
+            <span class="slot-badge">${m.slot}</span>
+            <span class="tier-badge tier-${m.tier}">${m.tier.toUpperCase()}</span>
           </div>
-        `;
-      });
-    }
+          <div style="font-size: 0.9rem; color: #94a3b8;">${m.mod}</div>
+        </div>
+        
+        <a href="${m.url}" target="_blank" class="beatmap-title" style="text-decoration: none; color: #f1f5f9; transition: color 0.3s ease;">${m.title}</a>
+        
+        <div class="beatmap-stats">
+          <div class="stat-item">
+            <span class="stat-label">Stars</span>
+            <span class="stat-value">${m.stars}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CS</span>
+            <span class="stat-value">${m.cs}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">AR</span>
+            <span class="stat-value">${m.ar}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">OD</span>
+            <span class="stat-value">${m.od}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">BPM</span>
+            <span class="stat-value">${m.bpm}</span>
+          </div>
+        </div>
+        
+        <div style="margin-top: 0.5rem;">
+          ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
+          ${m.notes ? `<span class="note-tag">📝 ${m.notes}</span>` : ''}
+        </div>
+        
+        <div class="beatmap-actions">
+          <button class="btn-small btn-edit" onclick="editBeatmap(${i})">✏️ Edit</button>
+          <button class="btn-small btn-delete" onclick="deleteBeatmap(${i})">🗑️ Delete</button>
+          ${m.preview_url && m.preview_url !== "/" ? `<button class="btn-small btn-preview" onclick="playPreview('${m.preview_url}')">🔊 Preview</button>` : ''}
+          ${m.download_url ? `<button class="btn-small btn-download" onclick="window.open('${m.download_url}', '_blank')">📥 Download</button>` : ''}
+        </div>
+      </div>
+    `;
+  });
+}
 
 function downloadJSON() {
   if (beatmaps.length === 0) {

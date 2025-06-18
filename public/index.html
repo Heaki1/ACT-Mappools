@@ -154,12 +154,18 @@
       transition: all 0.3s ease;
       cursor: pointer;
       border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .map-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 20px 40px rgba(59,130,246,0.2);
       border-color: var(--blue);
+    }
+
+    .map-card:active {
+      transform: translateY(-2px);
     }
 
     .map-cover {
@@ -553,52 +559,52 @@
       `;
     }
 
-        function createCard(map) {
+    function createCard(map) {
       return `
-        <div class="map-card" onclick="open('${map.url}')" role="article" aria-label="${map.title}">
+        <div class="map-card" onclick="window.open('${map.url}', '_blank')">
           <div style="position: relative;">
-            <img src="${map.cover_url || ''}" class="map-cover" alt="Beatmap Cover" aria-label="Beatmap Cover Image" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
+            <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
             <div class="map-overlay">
-              <div class="slot-badge" aria-label="Slot ${map.slot}">${map.slot}</div>
-              <div class="tier-badge tier-${map.tier}" aria-label="Tier ${map.tier}">${map.tier.toUpperCase()}</div>
+              <div class="slot-badge">${map.slot}</div>
+              <div class="tier-badge tier-${map.tier}">${map.tier.toUpperCase()}</div>
             </div>
           </div>
           
           <div class="map-content">
-            <h3 class="map-title" aria-label="Map Title">${map.title}</h3>
+            <h3 class="map-title">${map.title}</h3>
             
-            <div class="map-stats" role="group" aria-label="Map Statistics">
+            <div class="map-stats">
               <div class="stat-item">
-                <span class="stat-val stars" aria-label="Star Rating">${map.stars}</span>
+                <span class="stat-val stars">${map.stars}</span>
                 <span class="stat-lbl">Stars</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val" aria-label="Circle Size">${map.cs}</span>
+                <span class="stat-val">${map.cs}</span>
                 <span class="stat-lbl">CS</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val" aria-label="Approach Rate">${map.ar}</span>
+                <span class="stat-val">${map.ar}</span>
                 <span class="stat-lbl">AR</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val" aria-label="Overall Difficulty">${map.od}</span>
+                <span class="stat-val">${map.od}</span>
                 <span class="stat-lbl">OD</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val" aria-label="Beats Per Minute">${map.bpm}</span>
+                <span class="stat-val">${map.bpm}</span>
                 <span class="stat-lbl">BPM</span>
               </div>
             </div>
 
-            <div class="map-tags" role="group" aria-label="Map Tags">
-              ${map.skill ? `<span class="tag skill-tag" aria-label="Skill ${map.skill}">🎯 ${map.skill}</span>` : ''}
-              ${map.notes ? `<span class="tag note-tag" aria-label="Note ${map.notes}">📝 ${map.notes}</span>` : ''}
+            <div class="map-tags">
+              ${map.skill ? `<span class="tag skill-tag">🎯 ${map.skill}</span>` : ''}
+              ${map.notes ? `<span class="tag note-tag">📝 ${map.notes}</span>` : ''}
             </div>
 
-            <div class="map-actions" onclick="event.stopPropagation()" role="group" aria-label="Map Actions">
+            <div class="map-actions" onclick="event.stopPropagation()">
               ${map.preview_url && map.preview_url !== '/' ? 
-                `<button class="btn btn-play" onclick="play('${map.preview_url}')" aria-label="Preview Map">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="open('${map.url}')" aria-label="Download Map">📥 Download</button>
+                `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
+              <button class="btn btn-download" onclick="window.open('${map.url}', '_blank')">📥 Download</button>
             </div>
           </div>
         </div>
@@ -636,7 +642,6 @@
 
     function show(id) { document.getElementById(id).classList.remove('hidden'); }
     function hide(id) { document.getElementById(id).classList.add('hidden'); }
-    function open(url) { window.open(url, '_blank'); }
 
     // Auto-load from beatmaps.json or fallback to sample data
     document.addEventListener('DOMContentLoaded', () => {

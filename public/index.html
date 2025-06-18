@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tournament Mappool</title>
+  <meta name="description" content="ACT Mappool Manager for osu! - Organize and manage your tournament beatmap pools">
+  <meta name="keywords" content="osu, ACT Mappool, mappool, beatmaps, rhythm game">
+  <meta name="author" content="Heaki1">
+  <meta property="og:title" content="ACT Mappool">
+  <meta property="og:description" content="ACT Mappool Manager for osu! - Organize and manage your tournament beatmap pools">
+  <meta property="og:type" content="website">
+  <title>ACT Mappool</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
@@ -325,7 +333,24 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-
+    .preview-loading {
+      position: relative;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    .preview-loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(59,130,246,0.2);
+      border-top: 2px solid var(--blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
     .hidden { display: none; }
 
     @media (max-width: 768px) {
@@ -338,19 +363,20 @@
   </style>
 </head>
 <body>
-  <div class="loading hidden" id="loading">
-    <div class="spinner"></div>
+    <div class="loading hidden" id="loading" aria-hidden="true">
+    <div class="spinner" role="status" aria-label="Loading..."></div>
   </div>
 
   <div class="container">
-    <div class="header">
-      <h1 class="title">OSU! Tournament</h1>
-      <p style="color: var(--muted);">Mappool Showcase</p>
+     <div class="header">
+      <h1 class="title" aria-label="OSU Tournament">OSU! Tournament</h1>
+      <p aria-label="Mappool Showcase" style="color: var(--muted);">Mappool Showcase</p>
       
-      <div class="stats">
+      <div class="stats" role="group" aria-label="Tournament Statistics">
         <div class="stat">
-          <div class="stat-value" id="totalMaps">0</div>
+          <div class="stat-value" id="totalMaps" aria-label="Total Maps">0</div>
           <div class="stat-label">Maps</div>
+        </div>
         </div>
         <div class="stat">
           <div class="stat-value" id="avgStars">0.0</div>
@@ -485,64 +511,85 @@
         }).join('');
     }
 
-    function createCard(map) {
+        function createCard(map) {
       return `
-        <div class="map-card" onclick="open('${map.url}')">
+        <div class="map-card" onclick="open('${map.url}')" role="article" aria-label="${map.title}">
           <div style="position: relative;">
-            <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center'; this.style.justifyContent='center'; this.innerHTML='🎵';">
+            <img src="${map.cover_url || ''}" class="map-cover" alt="Beatmap Cover" aria-label="Beatmap Cover Image" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
             <div class="map-overlay">
-              <div class="slot-badge">${map.slot}</div>
-              <div class="tier-badge tier-${map.tier}">${map.tier.toUpperCase()}</div>
+              <div class="slot-badge" aria-label="Slot ${map.slot}">${map.slot}</div>
+              <div class="tier-badge tier-${map.tier}" aria-label="Tier ${map.tier}">${map.tier.toUpperCase()}</div>
             </div>
           </div>
           
           <div class="map-content">
-            <h3 class="map-title">${map.title}</h3>
+            <h3 class="map-title" aria-label="Map Title">${map.title}</h3>
             
-            <div class="map-stats">
+            <div class="map-stats" role="group" aria-label="Map Statistics">
               <div class="stat-item">
-                <span class="stat-val stars">⭐${map.stars}</span>
+                <span class="stat-val stars" aria-label="Star Rating">⭐${map.stars}</span>
                 <span class="stat-lbl">Stars</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val">${map.cs}</span>
+                <span class="stat-val" aria-label="Circle Size">${map.cs}</span>
                 <span class="stat-lbl">CS</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val">${map.ar}</span>
+                <span class="stat-val" aria-label="Approach Rate">${map.ar}</span>
                 <span class="stat-lbl">AR</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val">${map.od}</span>
+                <span class="stat-val" aria-label="Overall Difficulty">${map.od}</span>
                 <span class="stat-lbl">OD</span>
               </div>
               <div class="stat-item">
-                <span class="stat-val">${map.bpm}</span>
+                <span class="stat-val" aria-label="Beats Per Minute">${map.bpm}</span>
                 <span class="stat-lbl">BPM</span>
               </div>
             </div>
 
-            <div class="map-tags">
-              ${map.skill ? `<span class="tag skill-tag">🎯 ${map.skill}</span>` : ''}
-              ${map.notes ? `<span class="tag note-tag">📝 ${map.notes}</span>` : ''}
+            <div class="map-tags" role="group" aria-label="Map Tags">
+              ${map.skill ? `<span class="tag skill-tag" aria-label="Skill ${map.skill}">🎯 ${map.skill}</span>` : ''}
+              ${map.notes ? `<span class="tag note-tag" aria-label="Note ${map.notes}">📝 ${map.notes}</span>` : ''}
             </div>
 
-            <div class="map-actions" onclick="event.stopPropagation()">
+            <div class="map-actions" onclick="event.stopPropagation()" role="group" aria-label="Map Actions">
               ${map.preview_url && map.preview_url !== '/' ? 
-                `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="open('${map.url}')">📥 Download</button>
+                `<button class="btn btn-play" onclick="play('${map.preview_url}')" aria-label="Preview Map">🔊 Preview</button>` : ''}
+              <button class="btn btn-download" onclick="open('${map.url}')" aria-label="Download Map">📥 Download</button>
             </div>
           </div>
         </div>
       `;
     }
 
-    function play(url) {
+       function play(url) {
       if (audio) audio.pause();
+      
+      const btn = event.target;
+      btn.classList.add('preview-loading');
+      
       audio = new Audio(url);
       audio.volume = 0.5;
-      audio.play().catch(() => alert("Could not play preview"));
-      setTimeout(() => { if (audio) audio.pause(); }, 30000);
+      
+      audio.addEventListener('canplaythrough', () => {
+        btn.classList.remove('preview-loading');
+      });
+      
+      audio.addEventListener('error', () => {
+        btn.classList.remove('preview-loading');
+        alert("Could not play preview");
+      });
+      
+      audio.play().catch(() => {
+        btn.classList.remove('preview-loading');
+        alert("Could not play preview");
+      });
+      
+      setTimeout(() => {
+        if (audio) audio.pause();
+        btn.classList.remove('preview-loading');
+      }, 30000);
     }
 
     function show(id) { document.getElementById(id).classList.remove('hidden'); }

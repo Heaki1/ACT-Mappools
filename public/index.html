@@ -559,7 +559,17 @@
       `;
     }
 
-    function createCard(map) {
+       function createCard(map) {
+      // Helper function to format the download URL
+      const getDownloadUrl = (url) => {
+        // Extract beatmapset ID - this will get the ID whether it's in /beatmaps/ or /beatmapsets/ format
+        const match = url.match(/\d+/);
+        if (match) {
+          return `https://osu.ppy.sh/beatmapsets/${match[0]}/download?noVideo=1`;
+        }
+        return url; // fallback to original URL if no match
+      };
+
       return `
         <div class="map-card" onclick="window.open('${map.url}', '_blank')">
           <div style="position: relative;">
@@ -604,7 +614,7 @@
             <div class="map-actions" onclick="event.stopPropagation()">
               ${map.preview_url && map.preview_url !== '/' ? 
                 `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="window.open('${map.url.replace('/beatmaps/', '/beatmapsets/')}/download?noVideo=1', '_blank')">📥 Download</button>
+              <button class="btn btn-download" onclick="window.open('${getDownloadUrl(map.url)}', '_blank')">📥 Download</button>
             </div>
           </div>
         </div>

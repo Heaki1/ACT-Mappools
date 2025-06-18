@@ -570,12 +570,10 @@
     function createCard(map) {
       // Helper function to format the download URL
       const getDownloadUrl = (url) => {
-        const match = url.match(/\d+/);
-        if (match) {
-          return `https://osu.ppy.sh/beatmapsets/${match[0]}/download?noVideo=1`;
-        }
-        return url;
-      };
+      const match = url.match(/beatmapsets\/(\d+)/);
+     return match ? `https://osu.ppy.sh/beatmapsets/${match[1]}/download?noVideo=1` : url;
+    };
+
 
       return `
         <div class="map-card">
@@ -624,10 +622,19 @@
           <div class="map-actions">
             ${map.preview_url && map.preview_url !== '/' ? 
               `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-            <button class="btn btn-download" onclick="window.open('${getDownloadUrl(map.url)}', '_blank')">📥 Download</button>
+            <button class="btn btn-download" onclick="downloadMap('${getDownloadUrl(map.url)}')">📥 Download</button>
           </div>
         </div>
       `;
+    }
+    
+    function downloadMap(url) {
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = ''; // optional: specify a filename
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function play(url) {

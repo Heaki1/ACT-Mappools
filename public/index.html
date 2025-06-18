@@ -427,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Update stats
       const total = data.length;
-      const avgStars = (data.reduce((s, m) => s + +m.stars, 0) / total).toFixed(1);
+      const avgStars = (data.reduce((s, m) => s + parseFloat(m.stars), 0) / total).toFixed(1);
       const mods = [...new Set(data.map(m => m.mod))].length;
       
       document.getElementById('totalMaps').textContent = total;
@@ -444,21 +444,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render
       document.getElementById('mappool').innerHTML = Object.entries(groups)
-        .map(([mod, maps]) => `
-          <div class="mod-section">
-            <div class="mod-header">
-              <div class="mod-icon mod-${mod.toLowerCase()}">${mod}</div>
-              <div>
-                <div class="mod-title">${modNames[mod] || mod}</div>
-                <div style="color: var(--muted); font-size: 0.9rem;">${maps.length} map${maps.length !== 1 ? 's' : ''}</div>
-              </div>
-            </div>
-            <div class="maps-grid">
-              ${maps.map(createCard).join('')}
+  .map(([mod, maps]) => {
+    const avg = (maps.reduce((s, m) => s + parseFloat(m.stars), 0) / maps.length).toFixed(1);
+    return `
+      <div class="mod-section">
+        <div class="mod-header">
+          <div class="mod-icon mod-${mod.toLowerCase()}">${mod}</div>
+          <div>
+            <div class="mod-title">${modNames[mod] || mod}</div>
+            <div style="color: var(--muted); font-size: 0.9rem;">
+              ${maps.length} map${maps.length !== 1 ? 's' : ''} • Avg Stars: ${avg}
             </div>
           </div>
-        `).join('');
-    }
+        </div>
+        <div class="maps-grid">
+          ${maps.map(createCard).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
 
     function createCard(map) {
       return `
@@ -476,7 +480,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             <div class="map-stats">
               <div class="stat-item">
-                <span class="stat-val stars">⭐${map.stars}</span>
+                <span class="stat-val stars">${map.stars}</span>
                 <span class="stat-lbl">Stars</span>
               </div>
               <div class="stat-item">

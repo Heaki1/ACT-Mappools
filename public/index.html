@@ -421,6 +421,10 @@ function loadMaps() {
 document.addEventListener('DOMContentLoaded', () => {
   loadMaps();
 });
+// Modify the initialization to load maps when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+  loadMaps();
+});
 
     function render() {
       if (!data.length) return;
@@ -524,21 +528,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function hide(id) { document.getElementById(id).classList.add('hidden'); }
     function open(url) { window.open(url, '_blank'); }
 
-function loadMaps() {
-  show('loading');
-  fetch("beatmaps.json")
-    .then(r => r.json())
-    .then(json => {
-      data = Array.isArray(json) ? json : [json];
-      render();
-      hide('loading');
-    })
-    .catch(err => {
-      console.error("Failed to load beatmaps.json:", err);
-      alert("Could not load beatmaps.json");
-      hide('loading');
-    });
-}
 
 // Modify the initialization to load maps when the page loads
 document.addEventListener('DOMContentLoaded', () => {

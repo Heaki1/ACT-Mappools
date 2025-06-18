@@ -44,12 +44,6 @@
     <div id="mappool"></div>
   </div>
 
-  <div class="controls">
-    <button class="control-btn" onclick="loadSample()" title="Sample Data">📊</button>
-    <button class="control-btn" onclick="document.getElementById('file').click()" title="Load JSON">📁</button>
-    <input type="file" id="file" accept=".json" style="display:none" onchange="loadFile(event)">
-  </div>
-
   <script>
     let data = [];
     let audio = null;
@@ -59,55 +53,20 @@
       DT: 'Double Time', FM: 'Free Mod', TB: 'Tiebreaker'
     };
 
-    function loadFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      show('loading');
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          data = JSON.parse(e.target.result);
-          if (!Array.isArray(data)) data = [data];
-          render();
-          hide('loading');
-        } catch (err) {
-          alert('Error: ' + err.message);
-          hide('loading');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function loadMaps() {
-      show('loading');
-      fetch("beatmaps.json")
-        .then(r => r.json())
-        .then(json => {
-          data = Array.isArray(json) ? json : [json];
-          render();
-          hide('loading');
-        })
-        .catch(err => {
-          console.error("Failed to load beatmaps.json:", err);
-          hide('loading');
-          // Fallback to sample data if beatmaps.json doesn't exist
-          setTimeout(loadSample, 500);
-        });
-    }
-
-    function loadSample() {
-      show('loading');
-      data = [
-        {slot:"NM1", mod:"NM", tier:"mid", skill:"Aim Control", notes:"Warmup", title:"Kobaryo - HUG AND KILL [Embrace]", stars:"5.87", cs:"4.0", ar:"9.3", od:"8.5", bpm:"174", url:"https://osu.ppy.sh/beatmapsets/1564788#osu/3195446", preview_url:"https://b.ppy.sh/preview/1564788.mp3", cover_url:"https://assets.ppy.sh/beatmaps/1564788/covers/cover.jpg"},
-        {slot:"NM2", mod:"NM", tier:"high", skill:"Speed", notes:"Fast streams", title:"xi - FREEDOM DiVE [Another]", stars:"6.43", cs:"4.0", ar:"9.5", od:"8.0", bpm:"222", url:"https://osu.ppy.sh/beatmapsets/39804#osu/126645", preview_url:"https://b.ppy.sh/preview/39804.mp3", cover_url:"https://assets.ppy.sh/beatmaps/39804/covers/cover.jpg"},
-        {slot:"HD1", mod:"HD", tier:"mid", skill:"Reading", notes:"Hidden practice", title:"DragonForce - Through Fire And Flames [Myth]", stars:"5.91", cs:"4.0", ar:"9.0", od:"7.0", bpm:"200", url:"https://osu.ppy.sh/beatmapsets/20237#osu/70760", preview_url:"https://b.ppy.sh/preview/20237.mp3", cover_url:"https://assets.ppy.sh/beatmaps/20237/covers/cover.jpg"},
-        {slot:"HR1", mod:"HR", tier:"high", skill:"Precision", notes:"High AR", title:"UNDEAD CORPORATION - Everything will freeze [Extra]", stars:"7.12", cs:"5.2", ar:"10.0", od:"9.0", bpm:"185", url:"https://osu.ppy.sh/beatmapsets/158023#osu/336471", preview_url:"https://b.ppy.sh/preview/158023.mp3", cover_url:"https://assets.ppy.sh/beatmaps/158023/covers/cover.jpg"},
-        {slot:"DT1", mod:"DT", tier:"mid", skill:"Speed + Aim", notes:"Classic DT", title:"Demetori - Emotional Skyscraper [Extra Stage]", stars:"6.78", cs:"4.0", ar:"9.2", od:"8.0", bpm:"140", url:"https://osu.ppy.sh/beatmapsets/13223#osu/53554", preview_url:"https://b.ppy.sh/preview/13223.mp3", cover_url:"https://assets.ppy.sh/beatmaps/13223/covers/cover.jpg"},
-        {slot:"TB", mod:"TB", tier:"high", skill:"Endurance", notes:"Final showdown", title:"Camellia - GHOST [Collab Extra]", stars:"7.89", cs:"4.2", ar:"9.8", od:"9.2", bpm:"160", url:"https://osu.ppy.sh/beatmapsets/1138145#osu/2377755", preview_url:"https://b.ppy.sh/preview/1138145.mp3", cover_url:"https://assets.ppy.sh/beatmaps/1138145/covers/cover.jpg"}
-      ];
-      setTimeout(() => { render(); hide('loading'); }, 500);
-    }
+   function loadMaps() {
+  show('loading');
+  fetch("beatmaps.json")
+    .then(r => r.json())
+    .then(json => {
+      data = Array.isArray(json) ? json : [json];
+      render();
+      hide('loading');
+    })
+    .catch(err => {
+      console.error("Failed to load beatmaps.json:", err);
+      hide('loading');
+    });
+}
 
         function render() {
       if (!data.length) return;

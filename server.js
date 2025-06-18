@@ -20,7 +20,6 @@ const client_secret = '2gBS9LgMq8uuo5tp6WlOsBaRTQSiJCzIYiFxKK2q';
 let access_token = null;
 let token_expiry = 0;
 
-app.use(cors());
 
 // Fetch a new access token if needed
 async function getAccessToken() {

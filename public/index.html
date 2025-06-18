@@ -82,8 +82,33 @@
       text-transform: uppercase;
     }
 
-    .mod-section {
-      margin: 3rem 0;
+     .mod-section {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .tier-section {
+      margin: 2rem 0;
+    }
+
+    .tier-header {
+      margin-bottom: 2rem;
+    }
+
+    .tier-title {
+      font-size: 2rem;
+      font-weight: 700;
+      padding-left: 1rem;
+      border-left: 4px solid currentColor;
+    }
+
+    .high-tier {
+      color: var(--red);
+    }
+
+    .mid-tier {
+      color: var(--orange);
     }
 
     .mod-header {
@@ -91,8 +116,6 @@
       align-items: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid rgba(255,255,255,0.1);
     }
 
     .mod-icon {
@@ -457,7 +480,7 @@
       setTimeout(() => { render(); hide('loading'); }, 500);
     }
 
-    function render() {
+        function render() {
       if (!data.length) return;
       
       // Update stats
@@ -474,41 +497,60 @@
       document.getElementById('avgStars').textContent = avgStars;
       document.getElementById('totalMods').textContent = mods;
 
-      // Group by mod
-      const groups = {};
+      // Group by tier first, then by mod
+      const groups = {
+        high: {},
+        mid: {}
+      };
+
       data.forEach(map => {
+        const tier = map.tier || 'mid';
         const mod = map.mod || 'NM';
-        if (!groups[mod]) groups[mod] = [];
-        groups[mod].push(map);
+        if (!groups[tier][mod]) groups[tier][mod] = [];
+        groups[tier][mod].push(map);
       });
 
       // Render
-      document.getElementById('mappool').innerHTML = Object.entries(groups)
-        .map(([mod, maps]) => {
-          const modAvgStars = (
-            maps
-              .map(m => parseFloat(String(m.stars).replace(/[^\d.]/g, '')))
-              .filter(n => !isNaN(n))
-              .reduce((s, n) => s + n, 0) / maps.length
-          ).toFixed(1);
-          
-          return `
+      document.getElementById('mappool').innerHTML = `
+        ${renderTier('high', groups.high)}
+        ${renderTier('mid', groups.mid)}
+      `;
+    }
+         
+              function renderTier(tier, modGroups) {
+      if (Object.keys(modGroups).length === 0) return '';
+
+      const allMapsInTier = Object.values(modGroups).flat();
+      const tierAvgStars = (
+        allMapsInTier
+          .map(m => parseFloat(String(m.stars).replace(/[^\d.]/g, '')))
+          .filter(n => !isNaN(n))
+          .reduce((s, n) => s + n, 0) / allMapsInTier.length
+      ).toFixed(1);
+
+      return `
+        <div class="tier-section">
+          <div class="tier-header">
+            <h2 class="tier-title ${tier}-tier">
+              ${tier.charAt(0).toUpperCase() + tier.slice(1)} Tier
+              <span style="font-size: 0.9rem; color: var(--muted);">
+                ${allMapsInTier.length} maps • Avg Stars: ${tierAvgStars}
+              </span>
+            </h2>
+          </div>
+          ${Object.entries(modGroups).map(([mod, maps]) => `
             <div class="mod-section">
               <div class="mod-header">
                 <div class="mod-icon mod-${mod.toLowerCase()}">${mod}</div>
-                <div>
-                  <div class="mod-title">${modNames[mod] || mod}</div>
-                  <div style="color: var(--muted); font-size: 0.9rem;">
-                    ${maps.length} map${maps.length !== 1 ? 's' : ''} • Avg Stars: ${modAvgStars}
-                  </div>
-                </div>
+                <div class="mod-title">${modNames[mod] || mod}</div>
               </div>
               <div class="maps-grid">
                 ${maps.map(createCard).join('')}
               </div>
             </div>
-          `;
-        }).join('');
+          `).join('')}
+        </div>
+      `;
     }
 
         function createCard(map) {

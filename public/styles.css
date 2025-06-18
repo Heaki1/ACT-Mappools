@@ -177,6 +177,7 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+
     .map-title a {
       color: inherit;
       text-decoration: none;
@@ -185,6 +186,7 @@
 
     .map-title a:hover {
       color: #6c9fff;
+      text-decoration: underline;
     }
 
     .map-stats {

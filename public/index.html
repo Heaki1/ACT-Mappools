@@ -151,11 +151,18 @@
       background: var(--card);
       border-radius: 12px;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
       border: 1px solid rgba(255,255,255,0.1);
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .map-info {
+      cursor: pointer;
+    }
+
+    .map-info:hover {
+      background: rgba(255,255,255,0.05);
     }
 
     .map-card:hover {
@@ -280,8 +287,9 @@
       display: flex;
       gap: 0.5rem;
       margin-top: 0.75rem;
-      padding-top: 0.75rem;
+      padding: 1rem;
       border-top: 1px solid rgba(255,255,255,0.1);
+      background: var(--card);
     }
 
     .btn {
@@ -559,63 +567,64 @@
       `;
     }
 
-       function createCard(map) {
+    function createCard(map) {
       // Helper function to format the download URL
       const getDownloadUrl = (url) => {
-        // Extract beatmapset ID - this will get the ID whether it's in /beatmaps/ or /beatmapsets/ format
         const match = url.match(/\d+/);
         if (match) {
           return `https://osu.ppy.sh/beatmapsets/${match[0]}/download?noVideo=1`;
         }
-        return url; // fallback to original URL if no match
+        return url;
       };
 
       return `
-        <div class="map-card" onclick="window.open('${map.url}', '_blank')">
-          <div style="position: relative;">
-            <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
-            <div class="map-overlay">
-              <div class="slot-badge">${map.slot}</div>
-              <div class="tier-badge tier-${map.tier}">${map.tier.toUpperCase()}</div>
+        <div class="map-card">
+          <div class="map-info" onclick="window.open('${map.url}', '_blank')">
+            <div style="position: relative;">
+              <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
+              <div class="map-overlay">
+                <div class="slot-badge">${map.slot}</div>
+                <div class="tier-badge tier-${map.tier}">${map.tier.toUpperCase()}</div>
+              </div>
+            </div>
+            
+            <div class="map-content">
+              <h3 class="map-title">${map.title}</h3>
+              
+              <div class="map-stats">
+                <div class="stat-item">
+                  <span class="stat-val stars">${map.stars}</span>
+                  <span class="stat-lbl">Stars</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val">${map.cs}</span>
+                  <span class="stat-lbl">CS</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val">${map.ar}</span>
+                  <span class="stat-lbl">AR</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val">${map.od}</span>
+                  <span class="stat-lbl">OD</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-val">${map.bpm}</span>
+                  <span class="stat-lbl">BPM</span>
+                </div>
+              </div>
+
+              <div class="map-tags">
+                ${map.skill ? `<span class="tag skill-tag">🎯 ${map.skill}</span>` : ''}
+                ${map.notes ? `<span class="tag note-tag">📝 ${map.notes}</span>` : ''}
+              </div>
             </div>
           </div>
-          
-          <div class="map-content">
-            <h3 class="map-title">${map.title}</h3>
-            
-            <div class="map-stats">
-              <div class="stat-item">
-                <span class="stat-val stars">${map.stars}</span>
-                <span class="stat-lbl">Stars</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-val">${map.cs}</span>
-                <span class="stat-lbl">CS</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-val">${map.ar}</span>
-                <span class="stat-lbl">AR</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-val">${map.od}</span>
-                <span class="stat-lbl">OD</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-val">${map.bpm}</span>
-                <span class="stat-lbl">BPM</span>
-              </div>
-            </div>
 
-            <div class="map-tags">
-              ${map.skill ? `<span class="tag skill-tag">🎯 ${map.skill}</span>` : ''}
-              ${map.notes ? `<span class="tag note-tag">📝 ${map.notes}</span>` : ''}
-            </div>
-
-            <div class="map-actions" onclick="event.stopPropagation()">
-              ${map.preview_url && map.preview_url !== '/' ? 
-                `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="window.open('${getDownloadUrl(map.url)}', '_blank')">📥 Download</button>
-            </div>
+          <div class="map-actions">
+            ${map.preview_url && map.preview_url !== '/' ? 
+              `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
+            <button class="btn btn-download" onclick="window.open('${getDownloadUrl(map.url)}', '_blank')">📥 Download</button>
           </div>
         </div>
       `;

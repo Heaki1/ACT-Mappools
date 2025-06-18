@@ -604,7 +604,7 @@
             <div class="map-actions" onclick="event.stopPropagation()">
               ${map.preview_url && map.preview_url !== '/' ? 
                 `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="window.open('${map.url}', '_blank')">📥 Download</button>
+              <button class="btn btn-download" onclick="window.open('${map.url}/download', '_blank')">📥 Download</button>
             </div>
           </div>
         </div>

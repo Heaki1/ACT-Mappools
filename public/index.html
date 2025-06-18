@@ -604,14 +604,14 @@
             <div class="map-actions" onclick="event.stopPropagation()">
               ${map.preview_url && map.preview_url !== '/' ? 
                 `<button class="btn btn-play" onclick="play('${map.preview_url}')">🔊 Preview</button>` : ''}
-              <button class="btn btn-download" onclick="window.open('${map.url}/download', '_blank')">📥 Download</button>
+              <button class="btn btn-download" onclick="window.open('${map.url.replace('/beatmaps/', '/beatmapsets/')}/download?noVideo=1', '_blank')">📥 Download</button>
             </div>
           </div>
         </div>
       `;
     }
 
-       function play(url) {
+    function play(url) {
       if (audio) audio.pause();
       
       const btn = event.target;

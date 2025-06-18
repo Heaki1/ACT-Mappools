@@ -645,18 +645,31 @@
       });
     }
 
-    function downloadJSON() {
-      if (beatmaps.length === 0) {
-        alert("No beatmaps to download!");
-        return;
+function downloadJSON() {
+  if (beatmaps.length === 0) {
+    alert("No beatmaps to download!");
+    return;
+  }
+
+  // Deep copy and sanitize: remove all "⭐" from all string fields
+  const cleanBeatmaps = beatmaps.map(bm => {
+    const cleaned = {};
+    for (const k in bm) {
+      if (typeof bm[k] === "string") {
+        cleaned[k] = bm[k].replace(/⭐/g, "");
+      } else {
+        cleaned[k] = bm[k];
       }
-      
-      const blob = new Blob([JSON.stringify(beatmaps, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
     }
+    return cleaned;
+  });
+
+  const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
 
     function editBeatmap(index) {
       const beatmap = beatmaps[index];

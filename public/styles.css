@@ -177,6 +177,15 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
+    .map-title a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .map-title a:hover {
+      color: #6c9fff;
+    }
 
     .map-stats {
       display: grid;

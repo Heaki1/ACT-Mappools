@@ -142,6 +142,14 @@
       transform: translateY(-2px);
       box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
     }
+    .btn-download {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+    }
+
+    .btn-download:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
 
     .output-section {
       margin-top: 3rem;

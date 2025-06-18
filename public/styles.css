@@ -178,16 +178,15 @@
       overflow: hidden;
     }
 
-    .map-title a {
-      color: inherit;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
+   .map-title a {
+     color: #fff;
+     text-decoration: none;
+     transition: color 0.2s ease; 
+   }
 
     .map-title a:hover {
       color: #6c9fff;
-      text-decoration: underline;
-    }
+   }
 
     .map-stats {
       display: grid;

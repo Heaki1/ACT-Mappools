@@ -2,7 +2,7 @@
   {
     "slot": "NM1",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency",
     "notes": "Long, steady, with balanced jumps and streams.",
     "title": "KANA-BOON - Silhouette [Insane]",
@@ -18,7 +18,7 @@
   {
     "slot": "NM2",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Stream Focus",
     "notes": "Moderate BPM, focus on 1/4 streams and bursts.",
     "title": "Camellia - crystallized [Hyper]",
@@ -34,7 +34,7 @@
   {
     "slot": "NM3",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical / Slider Control",
     "notes": "Slider velocity changes, awkward rhythms.",
     "title": "xi - FREEDOM DiVE [Light Insane]",
@@ -50,7 +50,7 @@
   {
     "slot": "NM4",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Speed",
     "notes": "Frequent bursts, requires stamina and speed tapping.",
     "title": "Krewella - Live for the Night [Insane]",
@@ -66,7 +66,7 @@
   {
     "slot": "NM5",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Control / Low AR",
     "notes": "Lower AR, requires careful reading and control.",
     "title": "Sakuzyo - Imprinting [Hard]",
@@ -82,7 +82,7 @@
   {
     "slot": "NM6",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Alt / Dense Rhythm",
     "notes": "Dense rhythm, alternation-focused.",
     "title": "Ujico*/Snail's House - Ma Chouchou [Insane]",
@@ -98,7 +98,7 @@
   {
     "slot": "HD1",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Reading-Heavy (Low AR)",
     "notes": "Low AR, overlaps, requires reading.",
     "title": "Lia - Bravely You [Insane]",
@@ -114,7 +114,7 @@
   {
     "slot": "HD2",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Control/Slider Reading",
     "notes": "Slider-heavy, hidden increases difficulty.",
     "title": "Hanatan - Remote Control [Insane]",
@@ -130,7 +130,7 @@
   {
     "slot": "HD3",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical / Aim",
     "notes": "Pattern reading, awkward aim.",
     "title": "nano - Bull's Eye [Insane]",
@@ -146,7 +146,7 @@
   {
     "slot": "HR1",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Aim/Consistency",
     "notes": "Classic aim-focused, accessible with HR for 6 digits.",
     "title": "livetune - Tell Your World [Insane]",
@@ -162,7 +162,7 @@
   {
     "slot": "HR2",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Finger Control/Technical",
     "notes": "Shorter, rhythmically challenging.",
     "title": "sasakure.UK - Jack-the-Ripper◆ [Insane]",
@@ -178,7 +178,7 @@
   {
     "slot": "HR3",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Precision/Small CS",
     "notes": "CS5, precision required.",
     "title": "DJ Okawari - Flower Dance [Insane]",
@@ -194,7 +194,7 @@
   {
     "slot": "DT1",
     "mod": "DT",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Speed/Consistency",
     "notes": "Lots of tapping, not too dense.",
     "title": "Porter Robinson - Flicker [Insane]",
@@ -210,7 +210,7 @@
   {
     "slot": "DT2",
     "mod": "DT",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Speed Stamina (short bursts)",
     "notes": "Requires stamina, but short.",
     "title": "Hatsune Miku - World is Mine [Insane]",
@@ -226,7 +226,7 @@
   {
     "slot": "DT3",
     "mod": "DT",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Alt/Tech DT",
     "notes": "Alt patterns, high speed, but forgiving aim.",
     "title": "t+pazolite - Oshama Scramble! [Insane]",
@@ -242,7 +242,7 @@
   {
     "slot": "FM1",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Antimod (Both mods are hard)",
     "notes": "Strange rhythms, awkward for both mods.",
     "title": "Himeringo - Yuudachi no Ribbon [Hard]",
@@ -258,7 +258,7 @@
   {
     "slot": "FM2",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency",
     "notes": "Balanced for both mods, some density.",
     "title": "Shawn Wasabi - Marble Soda [Insane]",
@@ -274,7 +274,7 @@
   {
     "slot": "FM3",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "High AR/High BPM",
     "notes": "HR makes AR10, HD makes reading fun.",
     "title": "KOTOKO - Re-sublimity [Insane]",
@@ -290,7 +290,7 @@
   {
     "slot": "TB",
     "mod": "TB",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Tiebreaker",
     "notes": "Varied patterns, not favoring one skill, fair to all.",
     "title": "YOASOBI - Yoru ni Kakeru [Insane]",

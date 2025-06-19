@@ -2,7 +2,7 @@
   {
     "slot": "NM1",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency Map",
     "notes": "Imported from text file.",
     "title": "AKINO with bless4 - Yuki no Youni [z1085684963's Insane]",
@@ -18,7 +18,7 @@
   {
     "slot": "NM2",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Stream Map",
     "notes": "Imported from text file.",
     "title": "HO-KAGO TEA TIME - NO, Thank You! [Memories]",
@@ -34,7 +34,7 @@
   {
     "slot": "NM3",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical Map",
     "notes": "Imported from text file.",
     "title": "Ben Briggs - New Game Plus [Fearless Living]",
@@ -50,7 +50,7 @@
   {
     "slot": "NM4",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Speed Map",
     "notes": "Imported from text file.",
     "title": "Yooh - LegenD. [EXHAUST]",
@@ -66,7 +66,7 @@
   {
     "slot": "NM5",
     "mod": "NM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Control/Reading Map",
     "notes": "Imported from text file.",
     "title": "Wang Yi Tao - Zi You Sheng Guang [Present's Insane]",
@@ -82,7 +82,7 @@
   {
     "slot": "HD1",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency",
     "notes": "Imported from text file.",
     "title": "senya - Arehateta Chijou no Uta [Giralda's Lunatic]",
@@ -98,7 +98,7 @@
   {
     "slot": "HD2",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "AR 8 Reading Heavy",
     "notes": "Imported from text file.",
     "title": "Elroy - ANGEL 9 [SYLAS' INSANE]",
@@ -114,7 +114,7 @@
   {
     "slot": "HD3",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Higher AR Reading",
     "notes": "Imported from text file.",
     "title": "Eisyo-kobu - Oriental Blossom [Pata-Mon's Hyper]",
@@ -130,7 +130,7 @@
   {
     "slot": "HD4",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical Complement",
     "notes": "Imported from text file.",
     "title": "Memme - Chinese Restaurant [Hyper]",
@@ -146,7 +146,7 @@
   {
     "slot": "HD5",
     "mod": "HD",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Stream/Control",
     "notes": "Imported from text file.",
     "title": "Ardhito Pramono - Trash Talkin' [Insane]",
@@ -162,7 +162,7 @@
   {
     "slot": "HR1",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency Aim",
     "notes": "Imported from text file.",
     "title": "ABSOLUTE CASTAWAY - Shinsou Shintouron [Hard]",
@@ -178,7 +178,7 @@
   {
     "slot": "HR2",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Finger Control",
     "notes": "Imported from text file.",
     "title": "Eagle - S!ck [Nemis' Hyper]",
@@ -194,7 +194,7 @@
   {
     "slot": "HR3",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Precision Aim (CS 6.5)",
     "notes": "Imported from text file.",
     "title": "MIMI - Shijima ni Saku [Hard]",
@@ -210,7 +210,7 @@
   {
     "slot": "HR4",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Higher BPM Consistency",
     "notes": "Imported from text file.",
     "title": "Goose house - Hikaru nara [Mikii's Insane]",
@@ -226,7 +226,7 @@
   {
     "slot": "HR5",
     "mod": "HR",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical HR",
     "notes": "Imported from text file.",
     "title": "orangentle - HAELEQUIN [alacat's Light Insane]",
@@ -242,7 +242,7 @@
   {
     "slot": "FM1",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Antimod (AR 8)",
     "notes": "Imported from text file.",
     "title": "Gram (DJ Genki) - Nibelungen [Insane]",
@@ -258,7 +258,7 @@
   {
     "slot": "FM2",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Consistency (AR 8.5)",
     "notes": "Imported from text file.",
     "title": "TORIENA - RAT RACE [Team :3c's Hyper]",
@@ -274,7 +274,7 @@
   {
     "slot": "FM3",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Higher BPM",
     "notes": "Imported from text file.",
     "title": "Expander - subtractive [12]",
@@ -290,7 +290,7 @@
   {
     "slot": "FM4",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Technical Balance",
     "notes": "Imported from text file.",
     "title": "Infected Mushroom - The Legend Of The Black Shawarma [Insane]",
@@ -306,7 +306,7 @@
   {
     "slot": "FM5",
     "mod": "FM",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Precision/Control",
     "notes": "Imported from text file.",
     "title": "cosMo@bousouP feat. Hatsune Miku - The Disappearance of Hatsune Miku -DEAD END- [Hyper]",
@@ -322,7 +322,7 @@
   {
     "slot": "TB1",
     "mod": "TB",
-    "tier": "main",
+    "tier": "mid",
     "skill": "Marathon",
     "notes": "Imported from text file.",
     "title": "Mei Ayakura - Romantic Fall [Longing thoughts dyed in crimson]",

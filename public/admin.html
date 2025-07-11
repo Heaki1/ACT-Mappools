@@ -77,6 +77,10 @@
           <label>BPM</label>
           <input id="bpm" readonly />
         </div>
+        <div class="form-group">
+         <label>Length</label>
+         <input id="length" readonly />
+        </div>
       </div>
 
      <div class="action-buttons">
@@ -131,11 +135,12 @@
           document.getElementById("ar").value = d.ar;
           document.getElementById("od").value = d.od;
           document.getElementById("bpm").value = d.bpm;
+          document.getElementById("length").value = formatLength(d.length || 0);
 
           window.currentBeatmapData = {
             preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
             cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
-            download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`
+            download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
             length: d.length || 0
           };
 
@@ -169,7 +174,7 @@
         url: document.getElementById("url").value,
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
-        download_url: window.currentBeatmapData?.download_url || ""
+        download_url: window.currentBeatmapData?.download_url || "",
         length: window.currentBeatmapData?.length || 0
       };
 

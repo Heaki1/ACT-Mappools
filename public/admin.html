@@ -290,19 +290,6 @@ function downloadJSON() {
         }
       }, 30000);
     }
-
-(function checkAdminDownloadAccess() {
-  const password = prompt("Enter admin password to enable downloads:");
-  const correctPassword = "heavensecret123"; // 🔒 Set your own secret
-
-  if (password !== correctPassword) {
-    document.querySelectorAll(".admin-only").forEach(el => el.style.display = "none");
-    console.log("Download button disabled. Not admin.");
-  } else {
-    console.log("Admin access granted for downloading JSON.");
-  }
-})();
-
   </script>
 </body>
 </html>

@@ -94,6 +94,12 @@
   <script>
     let beatmaps = [];
 
+     const saved = localStorage.getItem("beatmapPool");
+     if (saved) {
+     beatmaps = JSON.parse(saved);
+     renderOutput();
+   }
+
     function extractId(url) {
       const match = url.match(/osu\/(\d+)/);
       return match ? match[1] : null;
@@ -171,6 +177,7 @@
       }
 
       beatmaps.push(entry);
+      localStorage.setItem("beatmapPool", JSON.stringify(beatmaps));
       sendToDiscord(entry);
       renderOutput();
 
@@ -239,10 +246,46 @@
               ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
               ${m.notes ? `<span class="note-tag">📝 ${m.notes}</span>` : ''}
             </div>
+            <div class="beatmap-actions" style="margin-top: 0.5rem;">
+            <button class="btn-small btn-edit" onclick="editBeatmap(${i})">✏️ Edit</button>
+            <button class="btn-small btn-delete" onclick="deleteBeatmap(${i})">🗑️ Delete</button>
+           </div>
           </div>
         `;
       });
     }
+
+function editBeatmap(index) {
+  const beatmap = beatmaps[index];
+
+  // Fill the form with existing data
+  document.getElementById("url").value = beatmap.url;
+  document.getElementById("slot").value = beatmap.slot;
+  document.getElementById("mod").value = beatmap.mod;
+  document.getElementById("skill").value = beatmap.skill;
+  document.getElementById("notes").value = beatmap.notes || '';
+  document.getElementById("title").value = beatmap.title;
+  document.getElementById("stars").value = beatmap.stars;
+  document.getElementById("cs").value = beatmap.cs;
+  document.getElementById("ar").value = beatmap.ar;
+  document.getElementById("od").value = beatmap.od;
+  document.getElementById("bpm").value = beatmap.bpm;
+
+  // Store beatmap preview/cover info
+  window.currentBeatmapData = {
+    preview_url: beatmap.preview_url,
+    cover_url: beatmap.cover_url,
+    download_url: beatmap.download_url
+  };
+
+  // Remove the beatmap so it can be re-added when editing is complete
+  beatmaps.splice(index, 1);
+  localStorage.setItem("beatmapPool", JSON.stringify(beatmaps)); // ✅ Save update
+  renderOutput();
+
+  // Scroll to top of form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
 function downloadJSON() {
   const password = prompt("Enter admin password to download:");
@@ -272,6 +315,14 @@ function downloadJSON() {
   a.href = URL.createObjectURL(blob);
   a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
   a.click();
+}
+
+function deleteBeatmap(index) {
+  if (confirm("Are you sure you want to delete this beatmap?")) {
+    beatmaps.splice(index, 1);
+    localStorage.setItem("beatmapPool", JSON.stringify(beatmaps)); // ✅ Update storage
+    renderOutput();
+  }
 }
 
     let currentAudio = null;

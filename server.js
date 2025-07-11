@@ -20,6 +20,11 @@ const client_secret = '2gBS9LgMq8uuo5tp6WlOsBaRTQSiJCzIYiFxKK2q';
 let access_token = null;
 let token_expiry = 0;
 
+function formatSeconds(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 // Fetch a new access token if needed
 async function getAccessToken() {
@@ -55,7 +60,8 @@ app.get('/api/beatmap/:id', async (req, res) => {
       cs: bm.cs,
       ar: bm.ar,
       od: bm.accuracy,
-      bpm: bm.bpm,  // ✅ COMMA HERE!
+      bpm: bm.bpm,
+      length: formatSeconds(bm.total_length),
       url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
       cover_url: bm.beatmapset.covers.card

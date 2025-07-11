@@ -193,6 +193,7 @@ function addToPool() {
   }
 
   beatmaps.push(entry);
+  sendToDiscord(entry);
   renderOutput();
 
   ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm'].forEach(id => {

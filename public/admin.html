@@ -206,13 +206,13 @@
         fields: [
           { name: "Slot", value: entry.slot, inline: true },
           { name: "Mod", value: entry.mod, inline: true },
-          { name: "Skill Focus", value: entry.skill || "N/A", inline: true },
-          { name: "Notes", value: entry.notes || "None", inline: false },
           { name: "Stars", value: `${entry.stars}★`, inline: true },
           { name: "CS", value: entry.cs, inline: true },
           { name: "AR", value: entry.ar, inline: true },
           { name: "OD", value: entry.od, inline: true },
-          { name: "BPM", value: entry.bpm, inline: true }
+          { name: "BPM", value: entry.bpm, inline: true },
+          { name: "Skill Focus", value: entry.skill || "N/A", inline: true },
+          { name: "Notes", value: entry.notes || "None", inline: false }
         ],
         thumbnail: { url: entry.cover_url },
         footer: { text: "ACT Beatmap Selector" },

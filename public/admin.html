@@ -188,10 +188,10 @@
       sendToDiscord(entry);
       renderOutput();
 
-      ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el.hasAttribute("readonly")) el.value = '';
-      });
+      ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.hasAttribute("readonly")) el.value = '';
+     });
       document.getElementById("mod").selectedIndex = 0;
       window.currentBeatmapData = null;
     }

@@ -23,6 +23,28 @@
       padding: 2rem;
     }
 
+nav {
+  background-color: #222;
+  padding: 15px 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+  font-size: 16px;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #00bfff;
+}
+
     .container { max-width: 1200px; margin: 0 auto; }
 
     .header {

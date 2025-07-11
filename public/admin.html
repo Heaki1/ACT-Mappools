@@ -135,13 +135,13 @@
           document.getElementById("ar").value = d.ar;
           document.getElementById("od").value = d.od;
           document.getElementById("bpm").value = d.bpm;
-          document.getElementById("length").value = formatLength(d.length || 0);
+          document.getElementById("length").value = d.length || "N/A";
 
           window.currentBeatmapData = {
             preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
             cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
             download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
-            length: d.length || 0
+            length: d.length || "N/A"
           };
 
           inputs.forEach(id => {
@@ -175,7 +175,7 @@
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
         download_url: window.currentBeatmapData?.download_url || "",
-        length: window.currentBeatmapData?.length || 0
+        length: window.currentBeatmapData?.length || "N/A"
       };
 
       if (!entry.slot || !entry.title || !entry.stars) {
@@ -250,7 +250,7 @@
               <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${m.ar}</span></div>
               <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${m.od}</span></div>
               <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${m.bpm}</span></div>
-              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${formatLength(m.length)}</span></div>
+              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${m.length}</span></div>
             </div>
             <div style="margin-top: 0.5rem;">
               ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
@@ -339,13 +339,6 @@ function deleteBeatmap(index) {
     localStorage.setItem("beatmapPool", JSON.stringify(beatmaps)); // ✅ Update storage
     renderOutput();
   }
-}
-
-function formatLength(seconds) {
-  if (!seconds || isNaN(seconds)) return "N/A";
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
     let currentAudio = null;

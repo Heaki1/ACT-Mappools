@@ -18,8 +18,8 @@ app.get('/admin', (req, res) => {
 });
 
 // osu! API credentials
-const client_id = '41700';
-const client_secret = '2gBS9LgMq8uuo5tp6WlOsBaRTQSiJCzIYiFxKK2q';
+const client_id = process.env.OSU_CLIENT_ID;
+const client_secret = process.env.OSU_CLIENT_SECRET;
 
 let access_token = null;
 let token_expiry = 0;

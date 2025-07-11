@@ -335,8 +335,36 @@ function downloadJSON() {
         currentAudio.pause();
         currentAudio = null;
       }
+
+function sendToDiscord(entry) {
+  const webhookUrl = "https://discord.com/api/webhooks/1393270206507257886/hkadRA555Euk6pQPl5iPyb90q2nTkRl7vDd2vX0foN3IUGahtpIB8yxfe8a-5XqJleD-";
+
+  const embed = {
+    title: `🎵 New Beatmap Added: ${entry.title}`,
+    url: entry.url,
+    color: 0x8e44ad,
+    fields: [
+      { name: "Slot", value: entry.slot, inline: true },
+      { name: "Mod", value: entry.mod, inline: true },
+      { name: "Tier", value: entry.tier, inline: true },
+      { name: "Stars", value: `${entry.stars}★`, inline: true },
+      { name: "CS", value: entry.cs, inline: true },
+      { name: "AR", value: entry.ar, inline: true },
+      { name: "OD", value: entry.od, inline: true },
+      { name: "BPM", value: entry.bpm, inline: true },
+    ],
+    thumbnail: { url: entry.cover_url },
+    footer: { text: "ACT Beatmap Selector" },
+    timestamp: new Date(),
+  };
+
+  fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ embeds: [embed] }),
+  }).catch(err => console.error("Failed to send to Discord:", err));
+}
       
-      // Play new audio
       currentAudio = new Audio(previewUrl);
       currentAudio.volume = 0.5;
       currentAudio.play().catch(e => {

@@ -201,19 +201,20 @@
 
     .maps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-      gap: 1.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+      gap: 1.125rem;
     }
 
     .map-card {
       background: rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 1.5rem;
+      border-radius: 15px;
+      padding: 1.125rem;
       border: 1px solid rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
+      font-size: 0.75em;
     }
 
     .map-card::before {
@@ -244,10 +245,10 @@
 
     .map-cover-container {
       position: relative;
-      border-radius: 15px;
+      border-radius: 11px;
       overflow: hidden;
       margin-bottom: 1rem;
-      height: 120px;
+      height: 90px;
     }
 
     .map-cover {

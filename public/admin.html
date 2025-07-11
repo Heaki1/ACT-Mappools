@@ -245,10 +245,16 @@
             <div style="margin-top: 0.5rem;">
               ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
               ${m.notes ? `<span class="note-tag">📝 ${m.notes}</span>` : ''}
+              <div style="margin-top: 0.25rem; font-size: 0.85rem; color: #60a5fa;">
+             📨 This beatmap has been sent to Discord for pooler to check
+            </div>
             </div>
             <div class="beatmap-actions" style="margin-top: 0.5rem;">
             <button class="btn-small btn-edit" onclick="editBeatmap(${i})">✏️ Edit</button>
             <button class="btn-small btn-delete" onclick="deleteBeatmap(${i})">🗑️ Delete</button>
+            ${m.preview_url && m.preview_url !== "/" ? `
+            <button class="btn-small btn-preview" onclick="playPreview('${m.preview_url}')">🔊 Preview</button>
+            ` : ''}
            </div>
           </div>
         `;

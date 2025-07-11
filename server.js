@@ -2,31 +2,36 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
+app.use(express.json()); // Allow JSON request bodies
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve admin.html on /admin route
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// 🔒 Replace these with your actual osu! API credentials
+// osu! API credentials
 const client_id = '41700';
 const client_secret = '2gBS9LgMq8uuo5tp6WlOsBaRTQSiJCzIYiFxKK2q';
 
 let access_token = null;
 let token_expiry = 0;
 
+// Format seconds into mm:ss
 function formatSeconds(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Fetch a new access token if needed
+// Get or refresh osu! access token
 async function getAccessToken() {
   const now = Date.now();
   if (access_token && now < token_expiry) return access_token;
@@ -43,7 +48,7 @@ async function getAccessToken() {
   return access_token;
 }
 
-// Beatmap info endpoint
+// GET /api/beatmap/:id → fetch beatmap info from osu!
 app.get('/api/beatmap/:id', async (req, res) => {
   try {
     const token = await getAccessToken();
@@ -54,18 +59,19 @@ app.get('/api/beatmap/:id', async (req, res) => {
     });
 
     const bm = response.data;
-const data = {
-  title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
-  stars: `${bm.difficulty_rating.toFixed(1)}★`,
-  cs: bm.cs,
-  ar: bm.ar,
-  od: bm.accuracy,
-  bpm: bm.bpm,
-  length: formatSeconds(bm.total_length || bm.beatmapset.total_length || 0),
-  url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
-  preview_url: bm.beatmapset.preview_url,
-  cover_url: bm.beatmapset.covers.card
-};
+
+    const data = {
+      title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
+      stars: `${bm.difficulty_rating.toFixed(1)}★`,
+      cs: bm.cs,
+      ar: bm.ar,
+      od: bm.accuracy,
+      bpm: bm.bpm,
+      length: formatSeconds(bm.total_length || bm.beatmapset.total_length || 0),
+      url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
+      preview_url: bm.beatmapset.preview_url,
+      cover_url: bm.beatmapset.covers.card
+    };
 
     res.json(data);
   } catch (err) {
@@ -74,6 +80,45 @@ const data = {
   }
 });
 
+// POST /api/send-discord → send embed to Discord
+app.post('/api/send-discord', async (req, res) => {
+  const webhookUrl = process.env.DISCORD_WEBHOOK;
+  const entry = req.body;
+
+  if (!entry || !entry.title) {
+    return res.status(400).json({ error: "Invalid beatmap payload" });
+  }
+
+  const embed = {
+    title: `🎵 New Beatmap Added: ${entry.title}`,
+    url: entry.url,
+    color: 0x8e44ad,
+    fields: [
+      { name: "Slot", value: entry.slot, inline: true },
+      { name: "Mod", value: entry.mod, inline: true },
+      { name: "Stars", value: `${entry.stars}★`, inline: true },
+      { name: "CS", value: entry.cs, inline: true },
+      { name: "AR", value: entry.ar, inline: true },
+      { name: "OD", value: entry.od, inline: true },
+      { name: "BPM", value: entry.bpm, inline: true },
+      { name: "Skill Focus", value: entry.skill || "N/A", inline: true },
+      { name: "Notes", value: entry.notes || "None", inline: false }
+    ],
+    thumbnail: { url: entry.cover_url },
+    footer: { text: "ACT Beatmap Selector" },
+    timestamp: new Date()
+  };
+
+  try {
+    await axios.post(webhookUrl, { embeds: [embed] });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Discord webhook error:", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to send to Discord" });
+  }
+});
+
+// Start server
 app.listen(port, () => {
-  console.log(`osu! beatmap API proxy running at http://localhost:${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });

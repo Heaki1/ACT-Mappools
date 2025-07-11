@@ -54,18 +54,18 @@ app.get('/api/beatmap/:id', async (req, res) => {
     });
 
     const bm = response.data;
-    const data = {
-      title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
-      stars: `${bm.difficulty_rating.toFixed(1)}★`,
-      cs: bm.cs,
-      ar: bm.ar,
-      od: bm.accuracy,
-      bpm: bm.bpm,
-      length: formatSeconds(bm.total_length),
-      url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
-      preview_url: bm.beatmapset.preview_url,
-      cover_url: bm.beatmapset.covers.card
-    };
+const data = {
+  title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
+  stars: `${bm.difficulty_rating.toFixed(1)}★`,
+  cs: bm.cs,
+  ar: bm.ar,
+  od: bm.accuracy,
+  bpm: bm.bpm,
+  length: formatSeconds(bm.total_length || bm.beatmapset.total_length || 0),
+  url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
+  preview_url: bm.beatmapset.preview_url,
+  cover_url: bm.beatmapset.covers.card
+};
 
     res.json(data);
   } catch (err) {

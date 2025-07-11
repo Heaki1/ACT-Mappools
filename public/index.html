@@ -71,9 +71,9 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 120px 2rem 4rem;
+      padding: 100px 1.5rem 3rem;
       position: relative;
       z-index: 1;
     }
@@ -103,19 +103,19 @@
     .stats {
       display: flex;
       justify-content: center;
-      gap: 1.8rem;
+      gap: 1.4rem;
       flex-wrap: wrap;
     }
 
     .stat {
       text-align: center;
-      padding: 0.9rem;
+      padding: 0.8rem;
       background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+      border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(10px);
       transition: transform 0.3s ease;
-      min-width: 72px;
+      min-width: 60px;
     }
 
     .stat:hover {
@@ -541,7 +541,7 @@
       --mod-color-rgb: 255, 215, 0;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 600px) {
       .container {
         padding: 100px 1rem 2rem;
       }
@@ -576,7 +576,7 @@
       }
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 400px) {
       .map-stats {
         grid-template-columns: repeat(2, 1fr);
       }

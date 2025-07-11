@@ -119,7 +119,7 @@
       const setId = extractSetId(document.getElementById("url").value);
       if (!id) return;
 
-      const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm'];
+       const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
       inputs.forEach(id => {
         const el = document.getElementById(id);
         el.value = 'Loading...';
@@ -175,7 +175,7 @@
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
         download_url: window.currentBeatmapData?.download_url || "",
-        length: window.currentBeatmapData?.length || "N/A"
+        length: document.getElementById("length").value || "N/A"
       };
 
       if (!entry.slot || !entry.title || !entry.stars) {

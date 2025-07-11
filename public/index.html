@@ -12,7 +12,7 @@
   <title>ACT Mappool</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
-  <link rel="stylesheet" href="Mappoolstyle.css">
+  <link rel="stylesheet" href="Mappoolstyles.css">
 </head>
 <body>
   <nav>
@@ -90,60 +90,27 @@
       document.getElementById('avgStars').textContent = avgStars;
       document.getElementById('totalMods').textContent = mods;
 
-      // Group by tier first, then by mod
-      const groups = {
-        high: {},
-        mid: {}
-      };
+      // Group by mod only
+      const groups = {};
 
       data.forEach(map => {
-        const tier = map.tier || 'mid';
         const mod = map.mod || 'NM';
-        if (!groups[tier][mod]) groups[tier][mod] = [];
-        groups[tier][mod].push(map);
+        if (!groups[mod]) groups[mod] = [];
+        groups[mod].push(map);
       });
 
       // Render
-      document.getElementById('mappool').innerHTML = `
-        ${renderTier('high', groups.high)}
-        ${renderTier('mid', groups.mid)}
-      `;
-    }
-         
-              function renderTier(tier, modGroups) {
-      if (Object.keys(modGroups).length === 0) return '';
-
-      const allMapsInTier = Object.values(modGroups).flat();
-      const tierAvgStars = (
-        allMapsInTier
-          .map(m => parseFloat(String(m.stars).replace(/[^\d.]/g, '')))
-          .filter(n => !isNaN(n))
-          .reduce((s, n) => s + n, 0) / allMapsInTier.length
-      ).toFixed(1);
-
-      return `
-        <div class="tier-section">
-          <div class="tier-header">
-            <h2 class="tier-title ${tier}-tier">
-              ${tier.charAt(0).toUpperCase() + tier.slice(1)} Tier
-              <span style="font-size: 0.9rem; color: var(--muted);">
-                ${allMapsInTier.length} maps • Avg Stars: ${tierAvgStars}
-              </span>
-            </h2>
+      document.getElementById('mappool').innerHTML = Object.entries(groups).map(([mod, maps]) => `
+        <div class="mod-section">
+          <div class="mod-header">
+            <div class="mod-icon mod-${mod.toLowerCase()}">${mod}</div>
+            <div class="mod-title">${modNames[mod] || mod}</div>
           </div>
-          ${Object.entries(modGroups).map(([mod, maps]) => `
-            <div class="mod-section">
-              <div class="mod-header">
-                <div class="mod-icon mod-${mod.toLowerCase()}">${mod}</div>
-                <div class="mod-title">${modNames[mod] || mod}</div>
-              </div>
-              <div class="maps-grid">
-                ${maps.map(createCard).join('')}
-              </div>
-            </div>
-          `).join('')}
+          <div class="maps-grid">
+            ${maps.map(createCard).join('')}
+          </div>
         </div>
-      `;
+      `).join('');
     }
 
 function createCard(map) {
@@ -160,7 +127,6 @@ function createCard(map) {
           <img src="${map.cover_url || ''}" class="map-cover" onerror="this.style.background='linear-gradient(135deg, #1a1a3e, #0f0f23)'; this.style.display='flex'; this.style.alignItems='center';">
           <div class="map-overlay">
             <div class="slot-badge">${map.slot}</div>
-            <div class="tier-badge tier-${map.tier}">${map.tier.toUpperCase()}</div>
           </div>
         </div>
         

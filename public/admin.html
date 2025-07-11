@@ -244,26 +244,35 @@
       });
     }
 
-    function downloadJSON() {
-      if (beatmaps.length === 0) {
-        alert("No beatmaps to download!");
-        return;
-      }
+function downloadJSON() {
+  const password = prompt("Enter admin password to download:");
+  const correctPassword = "heavensecret123"; // 🔒 Change this to your actual secret
 
-      const cleanBeatmaps = beatmaps.map(bm => {
-        const cleaned = {};
-        for (const k in bm) {
-          cleaned[k] = typeof bm[k] === "string" ? bm[k].replace(/⭐/g, "") : bm[k];
-        }
-        return cleaned;
-      });
+  if (password !== correctPassword) {
+    alert("Access denied. Incorrect admin password.");
+    return;
+  }
 
-      const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
+  if (beatmaps.length === 0) {
+    alert("No beatmaps to download!");
+    return;
+  }
+
+  // Clean stars
+  const cleanBeatmaps = beatmaps.map(bm => {
+    const cleaned = {};
+    for (const k in bm) {
+      cleaned[k] = typeof bm[k] === "string" ? bm[k].replace(/⭐/g, "") : bm[k];
     }
+    return cleaned;
+  });
+
+  const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
 
     let currentAudio = null;
     function playPreview(previewUrl) {

@@ -589,11 +589,12 @@
       transform: translateY(-2px);
     }
 
-    .map-stats {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1.2rem;
-      margin-bottom: 2rem;
+     .map-stats {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+     gap: 1rem;
+     margin-bottom: 2rem;
+     word-break: break-word;
     }
 
     .stat-item {
@@ -632,7 +633,7 @@
 
     .stat-val {
       display: block;
-      font-size: 1rem;
+      font-size: 0.9rem;
       font-weight: 800;
       color: var(--text-accent);
       margin-bottom: 0.5rem;
@@ -643,7 +644,7 @@
     }
 
     .stat-lbl {
-      font-size: 0.8rem;
+      font-size: 0.7rem;
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 1px;

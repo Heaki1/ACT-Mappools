@@ -6,37 +6,35 @@
   <title>OSU! Tournament - Mappool Showcase</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      --neon-gradient: linear-gradient(135deg, #ff006e 0%, #8338ec 50%, #3a86ff 100%);
-      --dark-gradient: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 30%, #16213e 70%, #0f0f23 100%);
-      --glass-bg: rgba(255, 255, 255, 0.08);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --text-primary: #ffffff;
-      --text-secondary: #b4b7c9;
-      --text-accent: #64b5f6;
-      --shadow-glow: 0 0 60px rgba(102, 126, 234, 0.25);
-      --transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-      --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    }
-
-    body {
-      background: var(--dark-gradient);
-      color: var(--text-primary);
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      min-height: 100vh;
-      line-height: 1.6;
-      overflow-x: hidden;
-      position: relative;
-    }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0.0%, #764ba2 80.0%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0.0%, #f5576c 80.0%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0.0%, #00f2fe 80.0%);
+  --neon-gradient: linear-gradient(135deg, #ff006e 0.0%, #8338ec 40.0%, #3a86ff 80.0%);
+  --dark-gradient: linear-gradient(135deg, #0a0a0a 0.0%, #1a1a2e 24.0%, #16213e 56.0%, #0f0f23 80.0%);
+  --glass-bg: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --text-primary: #ffffff;
+  --text-secondary: #b4b7c9;
+  --text-accent: #64b5f6;
+  --shadow-glow: 0 0 48.0px rgba(102, 126, 234, 0.25);
+  --transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+body {
+  background: var(--dark-gradient);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  min-height: 80.0vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
 
     body::before {
       content: '';
@@ -368,9 +366,9 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 3px;
       background: var(--mod-color);
-      border-radius: 28px 28px 0 0;
+      border-radius: 10px 10px 0 0;
       animation: expandWidth 1s ease-out;
     }
 
@@ -380,8 +378,8 @@
     }
 
     .mod-section:hover {
-      transform: translateY(-8px);
-      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 4°px rgba(0, 0, 0, 0.25);
     }
 
     .mod-header {
@@ -455,13 +453,12 @@
 
     .maps-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 4fr));
-      gap: 2.5rem;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
     }
 
     .map-card {
       transform: scale(0.8);
-      flex: 0 0 auto;
       background: var(--glass-bg);
       border-radius: 20px;
       padding: 2rem;
@@ -846,7 +843,7 @@
       }
       
       .mod-section {
-        padding: 2rem;
+        padding: 1rem;
       }
       
       .map-card {
@@ -1104,3 +1101,4 @@
   </script>
 </body>
 </html>
+

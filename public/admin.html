@@ -114,51 +114,58 @@
       return match ? match[1] : null;
     }
 
-    function fetchInfo() {
-      const id = extractId(document.getElementById("url").value);
-      const setId = extractSetId(document.getElementById("url").value);
-      if (!id) return;
+function fetchInfo() {
+  const id = extractId(document.getElementById("url").value);
+  const setId = extractSetId(document.getElementById("url").value);
+  if (!id) return;
 
-       const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
+  const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
+  inputs.forEach(id => {
+    const el = document.getElementById(id);
+    el.value = 'Loading...';
+    el.classList.add('loading');
+  });
+
+  fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById("title").value =
+        `${d.beatmapset.artist} - ${d.beatmapset.title} [${d.version}]`;
+
+      document.getElementById("stars").value =
+        d.difficulty_rating?.toFixed(2) ?? "N/A";
+
+      document.getElementById("cs").value = d.cs ?? "N/A";
+      document.getElementById("ar").value = d.ar ?? "N/A";
+      document.getElementById("od").value = d.accuracy ?? "N/A";
+      document.getElementById("bpm").value = d.bpm ?? "N/A";
+      document.getElementById("length").value =
+        d.total_length
+          ? `${Math.floor(d.total_length / 60)}:${String(d.total_length % 60).padStart(2, "0")}`
+          : "N/A";
+
+      window.currentBeatmapData = {
+        preview_url: d.beatmapset?.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
+        cover_url: d.beatmapset?.covers?.cover || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
+        download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
+        length: d.total_length ?? "N/A"
+      };
+
+      inputs.forEach(id => {
+        document.getElementById(id).classList.remove('loading');
+      });
+    })
+    .catch(err => {
+      console.error("Beatmap fetch failed:", err);
+
       inputs.forEach(id => {
         const el = document.getElementById(id);
-        el.value = 'Loading...';
-        el.classList.add('loading');
+        el.value = '';
+        el.classList.remove('loading');
       });
-
-      fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
-        .then(r => r.json())
-        .then(d => {
-          document.getElementById("title").value = d.title;
-          document.getElementById("stars").value = d.stars;
-          document.getElementById("cs").value = d.cs;
-          document.getElementById("ar").value = d.ar;
-          document.getElementById("od").value = d.od;
-          document.getElementById("bpm").value = d.bpm;
-          document.getElementById("length").value = d.length || "N/A";
-
-          window.currentBeatmapData = {
-            preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
-            cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
-            download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
-            length: d.length || "N/A"
-          };
-
-          inputs.forEach(id => {
-            document.getElementById(id).classList.remove('loading');
-          });
-        })
-        .catch(() => {
-          alert("Couldn't fetch info from the beatmap URL. Please check the URL and try again.");
-          inputs.forEach(id => {
-            const el = document.getElementById(id);
-            el.value = '';
-            el.classList.remove('loading');
-          });
-          window.currentBeatmapData = null;
-        });
-    }
-
+    });
+}
+    
     function addToPool() {
       const entry = {
         slot: document.getElementById("slot").value,

@@ -21,7 +21,8 @@
 }
 
 body {
-  background: var(--dark-gradient);
+  background: url('https://lh3.googleusercontent.com/blogger_img_proxy/AEn0k_sXYu9jZ_l3frHCREzokgGHPFm32l90Twe4urhQ4vSR_sN2ICUeydTkr2kgl7SwzTOJ_lbq3qAs6TaGYU9Y4gZ4yQh9S5I0f8rQPGZQsEf0j4JETP2sNrwjfkte5fl2jr9msCVkJM4wVFYlTuorObrFT24W8tq81mKGppEEImtR=w919-h516-p-k-no-nu') no-repeat center center fixed;
+  background-size: cover;
   color: var(--text-primary);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   min-height: 100vh;

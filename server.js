@@ -1,143 +1,124 @@
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const path = require("path");
-const rateLimit = require("express-rate-limit");
-require("dotenv").config();
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config(); // Load environment variables from .env
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-/* =====================
-   Middleware
-===================== */
+// Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json()); // Allow JSON request bodies
+app.use(express.static(path.join(__dirname, 'public')));
 
-/* =====================
-   Rate limit (optional but recommended)
-===================== */
-const suggestLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
-  message: { error: "Too many requests, slow down." }
+// Serve admin.html on /admin route
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-/* =====================
-   Serve pages
-===================== */
-app.get("/admin", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "admin.html"))
-);
-
-app.get("/suggest", (_, res) =>
-  res.sendFile(path.join(__dirname, "public", "suggest.html"))
-);
-
-/* =====================
-   osu! API Auth
-===================== */
+// osu! API credentials
 const client_id = process.env.OSU_CLIENT_ID;
 const client_secret = process.env.OSU_CLIENT_SECRET;
 
 let access_token = null;
 let token_expiry = 0;
 
+// Format seconds into mm:ss
+function formatSeconds(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Get or refresh osu! access token
 async function getAccessToken() {
   const now = Date.now();
   if (access_token && now < token_expiry) return access_token;
 
-  const r = await axios.post("https://osu.ppy.sh/oauth/token", {
+  const response = await axios.post('https://osu.ppy.sh/oauth/token', {
     client_id,
     client_secret,
-    grant_type: "client_credentials",
-    scope: "public"
+    grant_type: 'client_credentials',
+    scope: 'public'
   });
 
-  access_token = r.data.access_token;
-  token_expiry = now + r.data.expires_in * 1000 - 10_000;
+  access_token = response.data.access_token;
+  token_expiry = now + (response.data.expires_in * 1000) - 10000;
   return access_token;
 }
 
-function formatSeconds(sec = 0) {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-/* =====================
-   GET beatmap info
-===================== */
-app.get("/api/beatmap/:id", async (req, res) => {
+// GET /api/beatmap/:id → fetch beatmap info from osu!
+app.get('/api/beatmap/:id', async (req, res) => {
   try {
     const token = await getAccessToken();
     const id = req.params.id;
 
-    const r = await axios.get(
-      `https://osu.ppy.sh/api/v2/beatmaps/${id}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await axios.get(`https://osu.ppy.sh/api/v2/beatmaps/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-    const bm = r.data;
+    const bm = response.data;
 
-    res.json({
+    const data = {
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} (${bm.beatmapset.creator})`,
-      stars: bm.difficulty_rating.toFixed(1),
+      stars: `${bm.difficulty_rating.toFixed(1)}★`,
       cs: bm.cs,
       ar: bm.ar,
       od: bm.accuracy,
       bpm: bm.bpm,
-      length: formatSeconds(bm.total_length),
+      length: formatSeconds(bm.total_length || bm.beatmapset.total_length || 0),
       url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
       cover_url: bm.beatmapset.covers.card
-    });
+    };
+
+    res.json(data);
   } catch (err) {
-    console.error("Beatmap fetch error:", err.message);
-    res.status(500).json({ error: "Failed to fetch beatmap" });
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch beatmap info from osu! API' });
   }
 });
 
-/* =====================
-   PUBLIC: Send suggestion to Discord
-===================== */
-app.post("/api/suggest", suggestLimiter, async (req, res) => {
-  const b = req.body;
+// POST /api/send-discord → send embed to Discord
+app.post('/api/send-discord', async (req, res) => {
+  const webhookUrl = process.env.DISCORD_WEBHOOK;
+  const entry = req.body;
 
-  if (!b?.url) {
-    return res.status(400).json({ error: "Beatmap URL required" });
+  if (!entry || !entry.title) {
+    return res.status(400).json({ error: "Invalid beatmap payload" });
   }
 
   const embed = {
-    title: "📥 Beatmap Suggestion",
-    description: `[Open beatmap](${b.url})`,
-    color: 0x3498db,
+    title: `🎵 New Beatmap Added: ${entry.title}`,
+    url: entry.url,
+    color: 0x8e44ad,
     fields: [
-      { name: "Slot", value: b.slot || "Not specified", inline: true },
-      { name: "Mod", value: b.mod || "N/A", inline: true },
-      { name: "Suggested by", value: b.user || "Anonymous", inline: true },
-      { name: "Notes", value: b.notes || "None", inline: false }
+      { name: "Slot", value: entry.slot, inline: true },
+      { name: "Mod", value: entry.mod, inline: true },
+      { name: "Stars", value: `${entry.stars}★`, inline: true },
+      { name: "CS", value: entry.cs, inline: true },
+      { name: "AR", value: entry.ar, inline: true },
+      { name: "OD", value: entry.od, inline: true },
+      { name: "BPM", value: entry.bpm, inline: true },
+      { name: "Skill Focus", value: entry.skill || "N/A", inline: true },
+      { name: "Notes", value: entry.notes || "None", inline: false }
     ],
-    thumbnail: b.cover_url ? { url: b.cover_url } : undefined,
-    footer: { text: "Community suggestion" },
+    thumbnail: { url: entry.cover_url },
+    footer: { text: "ACT Beatmap Selector" },
     timestamp: new Date()
   };
 
   try {
-    await axios.post(process.env.DISCORD_WEBHOOK, {
-      embeds: [embed]
-    });
+    await axios.post(webhookUrl, { embeds: [embed] });
     res.json({ success: true });
   } catch (err) {
-    console.error("Discord error:", err.message);
+    console.error("Discord webhook error:", err.response?.data || err.message);
     res.status(500).json({ error: "Failed to send to Discord" });
   }
 });
 
-/* =====================
-   Start server
-===================== */
+// Start server
 app.listen(port, () => {
-  console.log(`✅ Server running on port ${port}`);
+  console.log(`✅ Server running at http://localhost:${port}`);
 });

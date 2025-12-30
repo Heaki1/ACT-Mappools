@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ACT Bounties</title>
+  <link rel="stylesheet" href="adminstyle.css" />
+</head>
+<body>
+  <nav>
+    <a href="Tournament TDLR.html">TL;DR</a> |
+    <a href="index.html">Mappool</a> |
+    <a href="bounties.html">Bounties</a>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>ACT Bounties Submission</h1>
+      <p>Players can submit challenges for specific maps</p>
+    </div>
+
+    <div class="form-section">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Beatmap URL</label>
+          <input id="url" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." onblur="fetchInfo()" />
+        </div>
+        <div class="form-group">
+          <label>Challenge</label>
+          <input id="challenge" placeholder="e.g. FC, #1 Algeria, Best Acc" />
+        </div>
+        <div class="form-group">
+          <label>Mods</label>
+          <input id="mods" placeholder="e.g. NM, HD, HR, DT" />
+        </div>
+        <div class="form-group">
+          <label>Map Difficulty</label>
+          <input id="difficulty" placeholder="e.g. Insane, Expert" />
+        </div>
+        <div class="form-group">
+          <label>Song Title</label>
+          <input id="title" readonly />
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="form-group">
+          <label>Stars</label>
+          <input id="stars" readonly />
+        </div>
+        <div class="form-group">
+          <label>CS</label>
+          <input id="cs" readonly />
+        </div>
+        <div class="form-group">
+          <label>AR</label>
+          <input id="ar" readonly />
+        </div>
+        <div class="form-group">
+          <label>OD</label>
+          <input id="od" readonly />
+        </div>
+        <div class="form-group">
+          <label>BPM</label>
+          <input id="bpm" readonly />
+        </div>
+        <div class="form-group">
+         <label>Length</label>
+         <input id="length" readonly />
+        </div>
+      </div>
+
+     <div class="action-buttons">
+       <button class="btn btn-primary" onclick="addBounty()">➕ Submit Bounty</button>
+     </div>
+    </div>
+
+    <div class="output-section">
+      <h2 class="section-title">📦 Current Bounties (<span id="count">0</span>)</h2>
+      <div id="output"></div>
+    </div>
+  </div>
+
+  <script>
+    let bounties = [];
+
+    // Load saved bounties
+    const saved = localStorage.getItem("bounties");
+    if (saved) {
+      bounties = JSON.parse(saved);
+      renderOutput();
+    }
+
+    function extractId(url) {
+      const match = url.match(/osu\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function extractSetId(url) {
+      const match = url.match(/beatmapsets\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function fetchInfo() {
+      const id = extractId(document.getElementById("url").value);
+      const setId = extractSetId(document.getElementById("url").value);
+      if (!id) return;
+
+      const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        el.value = 'Loading...';
+        el.classList.add('loading');
+      });
+
+      fetch("/api/beatmap/" + id)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById("title").value = d.title;
+          document.getElementById("stars").value = d.stars.replace("★", "");
+          document.getElementById("cs").value = d.cs ?? "N/A";
+          document.getElementById("ar").value = d.ar ?? "N/A";
+          document.getElementById("od").value = d.od ?? "N/A";
+          document.getElementById("bpm").value = d.bpm ?? "N/A";
+          document.getElementById("length").value = d.length ?? "N/A";
+
+          window.currentBeatmapData = {
+            preview_url: d.preview_url || "/",
+            cover_url: d.cover_url || "",
+            download_url: d.url || "#",
+            length: d.length || "N/A"
+          };
+
+          // Remove loading state
+          inputs.forEach(id => document.getElementById(id).classList.remove('loading'));
+        })
+        .catch(err => {
+          console.error("Beatmap fetch failed:", err);
+          inputs.forEach(id => {
+            const el = document.getElementById(id);
+            el.value = '';
+            el.classList.remove('loading');
+          });
+        });
+    }
+
+    function addBounty() {
+      const entry = {
+        url: document.getElementById("url").value,
+        challenge: document.getElementById("challenge").value,
+        mods: document.getElementById("mods").value,
+        difficulty: document.getElementById("difficulty").value,
+        title: document.getElementById("title").value,
+        stars: document.getElementById("stars").value,
+        cs: document.getElementById("cs").value,
+        ar: document.getElementById("ar").value,
+        od: document.getElementById("od").value,
+        bpm: document.getElementById("bpm").value,
+        length: document.getElementById("length").value,
+        preview_url: window.currentBeatmapData?.preview_url || "/",
+        cover_url: window.currentBeatmapData?.cover_url || "",
+        download_url: window.currentBeatmapData?.download_url || "",
+        type: "bounty"
+      };
+
+      if (!entry.url || !entry.challenge) {
+        alert("Please fill in the Beatmap URL and Challenge.");
+        return;
+      }
+
+      bounties.push(entry);
+      localStorage.setItem("bounties", JSON.stringify(bounties));
+      sendToDiscord(entry);
+      renderOutput();
+
+      ['url','challenge','mods','difficulty','title','stars','cs','ar','od','bpm','length'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      window.currentBeatmapData = null;
+    }
+
+    function sendToDiscord(entry) {
+      fetch("/api/send-discord", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(entry)
+      })
+      .then(r => r.json())
+      .then(data => console.log("✅ Bounty sent to Discord:", data))
+      .catch(err => console.error("❌ Discord error:", err));
+    }
+
+    function renderOutput() {
+      const out = document.getElementById("output");
+      const count = document.getElementById("count");
+
+      count.textContent = bounties.length;
+      out.innerHTML = "";
+
+      bounties.forEach((b, i) => {
+        out.innerHTML += `
+          <div class="beatmap-card">
+            ${b.cover_url ? `<img src="${b.cover_url}" class="cover-image">` : ''}
+            <div class="beatmap-header">
+              <div><strong>${b.title}</strong></div>
+              <div style="font-size:0.85rem;color:#94a3b8;">${b.mods} | ${b.difficulty}</div>
+            </div>
+            <div style="margin-top:0.25rem;">🎯 Challenge: ${b.challenge}</div>
+            <div class="beatmap-stats">
+              <div class="stat-item"><span class="stat-label">Stars</span><span class="stat-value">${b.stars}</span></div>
+              <div class="stat-item"><span class="stat-label">CS</span><span class="stat-value">${b.cs}</span></div>
+              <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${b.ar}</span></div>
+              <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${b.od}</span></div>
+              <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${b.bpm}</span></div>
+              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${b.length}</span></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>

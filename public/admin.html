@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ACT Players suggestions</title>
+  <link rel="stylesheet" href="adminstyle.css" />
+</head>
+<body>
+  <nav>
+    <a href="Tournament TDLR.html">TL;DR</a> |
+    <a href="index.html">Mappool</a>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>ACT Players suggestion</h1>
+      <p>Beatmaps Selector</p>
+    </div>
+
+    <div class="form-section">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Beatmap URL</label>
+          <input id="url" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." onblur="fetchInfo()" />
+        </div>
+        <div class="form-group">
+          <label>Slot</label>
+          <input id="slot" placeholder="e.g. NM1, HD2, HR3" />
+        </div>
+        <div class="form-group">
+          <label>Mod</label>
+          <select id="mod">
+            <option value="">Select Mod</option>
+            <option value="NM">NM (No Mod)</option>
+            <option value="HD">HD (Hidden)</option>
+            <option value="HR">HR (Hard Rock)</option>
+            <option value="FM">FM (FreeMod)</option>
+            <option value="DT">DT (Double Time)</option>
+            <option value="TB">TB (Tiebreaker)</option>
+            <option value="EZ">EZ (Easy)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Skill Focus</label>
+          <input id="skill" placeholder="e.g. Aim / Low AR / Speed / Technical" />
+        </div>
+        <div class="form-group">
+          <label>Notes / Comments</label>
+          <input id="notes" placeholder="Additional notes or comments about this beatmap" />
+        </div>
+        <div class="form-group">
+          <label>Song Title</label>
+          <input id="title" readonly />
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="form-group">
+          <label>Stars</label>
+          <input id="stars" readonly />
+        </div>
+        <div class="form-group">
+          <label>CS</label>
+          <input id="cs" readonly />
+        </div>
+        <div class="form-group">
+          <label>AR</label>
+          <input id="ar" readonly />
+        </div>
+        <div class="form-group">
+          <label>OD</label>
+          <input id="od" readonly />
+        </div>
+        <div class="form-group">
+          <label>BPM</label>
+          <input id="bpm" readonly />
+        </div>
+        <div class="form-group">
+         <label>Length</label>
+         <input id="length" readonly />
+        </div>
+      </div>
+
+     <div class="action-buttons">
+       <button class="btn btn-primary" onclick="addToPool()">➕ Add to Pool</button>
+       <button class="btn btn-secondary admin-only" onclick="downloadJSON()">💾 Download JSON</button>
+     </div>
+    </div>
+
+    <div class="output-section">
+      <h2 class="section-title">🗂️ Current Beatmaps (<span id="count">0</span>)</h2>
+      <div id="output"></div>
+    </div>
+  </div>
+
+  <script>
+    let beatmaps = [];
+
+     const saved = localStorage.getItem("beatmapPool");
+     if (saved) {
+     beatmaps = JSON.parse(saved);
+     renderOutput();
+   }
+
+    function extractId(url) {
+      const match = url.match(/osu\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function extractSetId(url) {
+      const match = url.match(/beatmapsets\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function fetchInfo() {
+      const id = extractId(document.getElementById("url").value);
+      const setId = extractSetId(document.getElementById("url").value);
+      if (!id) return;
+
+       const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
+      inputs.forEach(id => {
+        const el = document.getElementById(id);
+        el.value = 'Loading...';
+        el.classList.add('loading');
+      });
+
+      fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById("title").value = d.title;
+          document.getElementById("stars").value = d.stars;
+          document.getElementById("cs").value = d.cs;
+          document.getElementById("ar").value = d.ar;
+          document.getElementById("od").value = d.od;
+          document.getElementById("bpm").value = d.bpm;
+          document.getElementById("length").value = d.length || "N/A";
+
+          window.currentBeatmapData = {
+            preview_url: d.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
+            cover_url: d.cover_url || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
+            download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
+            length: d.length || "N/A"
+          };
+
+          inputs.forEach(id => {
+            document.getElementById(id).classList.remove('loading');
+          });
+        })
+        .catch(() => {
+          alert("Couldn't fetch info from the beatmap URL. Please check the URL and try again.");
+          inputs.forEach(id => {
+            const el = document.getElementById(id);
+            el.value = '';
+            el.classList.remove('loading');
+          });
+          window.currentBeatmapData = null;
+        });
+    }
+
+    function addToPool() {
+      const entry = {
+        slot: document.getElementById("slot").value,
+        mod: document.getElementById("mod").value,
+        skill: document.getElementById("skill").value,
+        notes: document.getElementById("notes").value,
+        title: document.getElementById("title").value,
+        stars: document.getElementById("stars").value,
+        cs: document.getElementById("cs").value,
+        ar: document.getElementById("ar").value,
+        od: document.getElementById("od").value,
+        bpm: document.getElementById("bpm").value,
+        url: document.getElementById("url").value,
+        preview_url: window.currentBeatmapData?.preview_url || "/",
+        cover_url: window.currentBeatmapData?.cover_url || "",
+        download_url: window.currentBeatmapData?.download_url || "",
+        length: document.getElementById("length").value || "N/A"
+      };
+
+      if (!entry.slot || !entry.title || !entry.stars) {
+        alert("Please fill in the beatmap URL and slot before adding to pool.");
+        return;
+      }
+
+      beatmaps.push(entry);
+      localStorage.setItem("beatmapPool", JSON.stringify(beatmaps));
+      sendToDiscord(entry);
+      renderOutput();
+
+      ['url', 'slot', 'skill', 'notes', 'title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el.hasAttribute("readonly")) el.value = '';
+     });
+      document.getElementById("mod").selectedIndex = 0;
+      window.currentBeatmapData = null;
+    }
+
+    function sendToDiscord(entry) {
+  fetch("/api/send-discord", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(entry)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Failed to send to Discord");
+    return response.json();
+  })
+  .then(data => {
+    console.log("✅ Beatmap sent to Discord via server:", data);
+  })
+  .catch(err => {
+    console.error("❌ Error sending to Discord via backend:", err);
+    alert("Failed to send to Discord. Please check your server.");
+  });
+}
+
+    function renderOutput() {
+      const out = document.getElementById("output");
+      const count = document.getElementById("count");
+
+      count.textContent = beatmaps.length;
+      out.innerHTML = "";
+
+      beatmaps.forEach((m, i) => {
+        out.innerHTML += `
+          <div class="beatmap-card">
+            ${m.cover_url && m.cover_url !== "" ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
+            <div class="beatmap-header">
+              <div>
+                <span class="slot-badge">${m.slot}</span>
+              </div>
+              <div style="font-size: 0.9rem; color: #94a3b8;">${m.mod}</div>
+            </div>
+            <a href="${m.url}" target="_blank" class="beatmap-title" style="text-decoration: none; color: #f1f5f9;">${m.title}</a>
+            <div class="beatmap-stats">
+              <div class="stat-item"><span class="stat-label">Stars</span><span class="stat-value">${m.stars}</span></div>
+              <div class="stat-item"><span class="stat-label">CS</span><span class="stat-value">${m.cs}</span></div>
+              <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${m.ar}</span></div>
+              <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${m.od}</span></div>
+              <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${m.bpm}</span></div>
+              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${m.length}</span></div>
+            </div>
+            <div style="margin-top: 0.5rem;">
+              ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
+              ${m.notes ? `<span class="note-tag">📝 ${m.notes}</span>` : ''}
+              <div style="margin-top: 0.25rem; font-size: 0.85rem; color: #60a5fa;">
+             📨 This beatmap has been sent to Discord for pooler to check
+            </div>
+            </div>
+            <div class="beatmap-actions" style="margin-top: 0.5rem;">
+            <button class="btn-small btn-edit" onclick="editBeatmap(${i})">✏️ Edit</button>
+            <button class="btn-small btn-delete" onclick="deleteBeatmap(${i})">🗑️ Delete</button>
+            ${m.preview_url && m.preview_url !== "/" ? `
+            <button class="btn-small btn-preview" onclick="playPreview('${m.preview_url}')">🔊 Preview</button>
+            ` : ''}
+           </div>
+          </div>
+        `;
+      });
+    }
+
+function editBeatmap(index) {
+  const beatmap = beatmaps[index];
+
+  // Fill the form with existing data
+  document.getElementById("url").value = beatmap.url;
+  document.getElementById("slot").value = beatmap.slot;
+  document.getElementById("mod").value = beatmap.mod;
+  document.getElementById("skill").value = beatmap.skill;
+  document.getElementById("notes").value = beatmap.notes || '';
+  document.getElementById("title").value = beatmap.title;
+  document.getElementById("stars").value = beatmap.stars;
+  document.getElementById("cs").value = beatmap.cs;
+  document.getElementById("ar").value = beatmap.ar;
+  document.getElementById("od").value = beatmap.od;
+  document.getElementById("bpm").value = beatmap.bpm;
+
+  // Store beatmap preview/cover info
+  window.currentBeatmapData = {
+    preview_url: beatmap.preview_url,
+    cover_url: beatmap.cover_url,
+    download_url: beatmap.download_url
+  };
+
+  // Remove the beatmap so it can be re-added when editing is complete
+  beatmaps.splice(index, 1);
+  localStorage.setItem("beatmapPool", JSON.stringify(beatmaps)); // ✅ Save update
+  renderOutput();
+
+  // Scroll to top of form
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function downloadJSON() {
+  const password = prompt("Enter admin password to download:");
+  const correctPassword = "heavensecret123"; // 🔒 Change this to your actual secret
+
+  if (password !== correctPassword) {
+    alert("Access denied. Incorrect admin password.");
+    return;
+  }
+
+  if (beatmaps.length === 0) {
+    alert("No beatmaps to download!");
+    return;
+  }
+
+  // Clean stars
+  const cleanBeatmaps = beatmaps.map(bm => {
+    const cleaned = {};
+    for (const k in bm) {
+      cleaned[k] = typeof bm[k] === "string" ? bm[k].replace(/⭐/g, "") : bm[k];
+    }
+    return cleaned;
+  });
+
+  const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+}
+
+function deleteBeatmap(index) {
+  if (confirm("Are you sure you want to delete this beatmap?")) {
+    beatmaps.splice(index, 1);
+    localStorage.setItem("beatmapPool", JSON.stringify(beatmaps)); // ✅ Update storage
+    renderOutput();
+  }
+}
+
+    let currentAudio = null;
+    function playPreview(previewUrl) {
+      if (currentAudio) currentAudio.pause();
+      currentAudio = new Audio(previewUrl);
+      currentAudio.volume = 0.5;
+      currentAudio.play().catch(e => {
+        console.error("Preview error:", e);
+        alert("Could not play preview.");
+      });
+      setTimeout(() => {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+      }, 30000);
+    }
+  </script>
+</body>
+</html>

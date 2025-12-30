@@ -1,0 +1,187 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    min-height: 100vh;
+}
+.container {
+    background: rgba(255, 240, 245, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #333;
+}
+
+nav {
+  background-color: #222;
+  padding: 15px 20px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+  font-size: 16px;
+  transition: color 0.3s;
+}
+
+nav a:hover {
+  color: #00bfff;
+}
+
+        .section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h2, .section-title {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 20px;
+        }
+        
+        h3 {
+            color: #2980b9;
+            margin-top: 20px;
+        }
+        
+        .notice {
+            background: #f8f9fa;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            color: #333;
+        }
+       
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .staff-role {
+            background: rgba(96, 125, 139, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(96, 125, 139, 0.5);
+        }
+
+        .staff-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #4ecdc4;
+            margin-bottom: 8px;
+        }
+        .staff-role:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        
+        .staff-role > div:last-child {
+            color: #fff;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+        
+        /* Color coding for different types of information */
+        .tournament-type { color: #e74c3c; font-weight: bold; }
+        .eligibility { color: #27ae60; font-weight: bold; }
+        .format { color: #8e44ad; font-weight: bold; }
+        .timing { color: #f39c12; font-weight: bold; }
+        .advancement { color: #2980b9; font-weight: bold; }
+        .rules { color: #c0392b; font-weight: bold; }
+        .penalties { color: #e67e22; font-weight: bold; }
+        .technical { color: #16a085; font-weight: bold; }
+        
+        /* Mod colors matching osu! standards */
+        .nm { color: #4CAF50; font-weight: bold; }
+        .hd { color: #2196F3; font-weight: bold; }
+        .hr { color: #F44336; font-weight: bold; }
+        .dt { color: #FF9800; font-weight: bold; }
+        .fm { color: #9C27B0; font-weight: bold; }
+        .ez { color: #00BCD4; font-weight: bold; }
+        .tb { color: #795548; font-weight: bold; }
+        .nf { color: #607D8B; font-weight: bold; }
+        
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+        }
+        
+        .center {
+            text-align: center;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            border: 1px solid #ffeaa7;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .staff-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .container, .section {
+                padding: 20px;
+            }
+
+ .title-container {
+    display: flex;
+    justify-content: center; 
+    gap: 40px;               
+    margin-top: 30px;        
+     }

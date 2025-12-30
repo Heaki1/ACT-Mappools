@@ -17,9 +17,12 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Serve admin page
+// Serve admin pages
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+app.get('/bounties', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'bounties.html'));
 });
 
 // osu! API credentials
@@ -85,31 +88,35 @@ app.get('/api/beatmap/:id', async (req, res) => {
   }
 });
 
-// API route to send beatmap info to Discord
+// API route to send submissions to Discord
 app.post('/api/send-discord', async (req, res) => {
   const webhookUrl = process.env.DISCORD_WEBHOOK;
   const entry = req.body;
 
   if (!entry || !entry.title) {
-    return res.status(400).json({ error: "Invalid beatmap payload" });
+    return res.status(400).json({ error: "Invalid payload" });
   }
 
+  // Determine type for embed: Suggestion or Bounty
+  const type = entry.type === "bounty" ? "Bounty" : "Suggestion";
+
   const embed = {
-    title: `🎵 New Beatmap Added: ${entry.title}`,
+    title: `🎵 New ${type} Added: ${entry.title}`,
     url: entry.url,
-    color: 0x8e44ad,
+    color: type === "Bounty" ? 0xf1c40f : 0x8e44ad,
     fields: [
-      { name: "Slot", value: entry.slot, inline: true },
-      { name: "Mod", value: entry.mod, inline: true },
-      { name: "Stars", value: entry.stars, inline: true },
-      { name: "CS", value: entry.cs, inline: true },
-      { name: "AR", value: entry.ar, inline: true },
-      { name: "OD", value: entry.od, inline: true },
-      { name: "BPM", value: entry.bpm, inline: true },
-      { name: "Skill Focus", value: entry.skill || "N/A", inline: true },
-      { name: "Notes", value: entry.notes || "None", inline: false }
+      { name: "Type", value: type, inline: true },
+      { name: "Slot", value: entry.slot || "N/A", inline: true },
+      { name: "Mod", value: entry.mod || entry.mods || "N/A", inline: true },
+      { name: "Stars", value: entry.stars || "N/A", inline: true },
+      { name: "CS", value: entry.cs || "N/A", inline: true },
+      { name: "AR", value: entry.ar || "N/A", inline: true },
+      { name: "OD", value: entry.od || "N/A", inline: true },
+      { name: "BPM", value: entry.bpm || "N/A", inline: true },
+      { name: "Skill / Challenge", value: entry.skill || entry.challenge || "N/A", inline: false },
+      { name: "Difficulty / Notes", value: entry.difficulty || entry.notes || "None", inline: false }
     ],
-    thumbnail: { url: entry.cover_url },
+    thumbnail: { url: entry.cover_url || "" },
     footer: { text: "ACT Beatmap Selector" },
     timestamp: new Date()
   };

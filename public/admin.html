@@ -129,20 +129,27 @@ function fetchInfo() {
   fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
     .then(r => r.json())
     .then(d => {
-      document.getElementById("title").value =
-        `${d.beatmapset.artist} - ${d.beatmapset.title} [${d.version}]`;
+  document.getElementById("title").value = d.title;
+  document.getElementById("stars").value = d.stars.replace("★", "");
+  document.getElementById("cs").value = d.cs ?? "N/A";
+  document.getElementById("ar").value = d.ar ?? "N/A";
+  document.getElementById("od").value = d.od ?? "N/A";
+  document.getElementById("bpm").value = d.bpm ?? "N/A";
+  document.getElementById("length").value = d.length ?? "N/A";
 
-      document.getElementById("stars").value =
-        d.difficulty_rating?.toFixed(2) ?? "N/A";
+  window.currentBeatmapData = {
+    preview_url: d.preview_url || "/",
+    cover_url: d.cover_url || "",
+    download_url: d.url || "#",
+    length: d.length || "N/A"
+  };
 
-      document.getElementById("cs").value = d.cs ?? "N/A";
-      document.getElementById("ar").value = d.ar ?? "N/A";
-      document.getElementById("od").value = d.accuracy ?? "N/A";
-      document.getElementById("bpm").value = d.bpm ?? "N/A";
-      document.getElementById("length").value =
-        d.total_length
-          ? `${Math.floor(d.total_length / 60)}:${String(d.total_length % 60).padStart(2, "0")}`
-          : "N/A";
+  // Remove loading state
+  ['title','stars','cs','ar','od','bpm','length'].forEach(id => {
+    document.getElementById(id).classList.remove('loading');
+  });
+})
+
 
       window.currentBeatmapData = {
         preview_url: d.beatmapset?.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,

@@ -116,7 +116,6 @@
 
 function fetchInfo() {
   const id = extractId(document.getElementById("url").value);
-  const setId = extractSetId(document.getElementById("url").value);
   if (!id) return;
 
   const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
@@ -129,42 +128,30 @@ function fetchInfo() {
   fetch("/api/beatmap/" + id)
     .then(r => r.json())
     .then(d => {
-  document.getElementById("title").value = d.title;
-  document.getElementById("stars").value = d.stars.replace("★", "");
-  document.getElementById("cs").value = d.cs ?? "N/A";
-  document.getElementById("ar").value = d.ar ?? "N/A";
-  document.getElementById("od").value = d.od ?? "N/A";
-  document.getElementById("bpm").value = d.bpm ?? "N/A";
-  document.getElementById("length").value = d.length ?? "N/A";
+      // Fill inputs
+      document.getElementById("title").value = d.title;
+      document.getElementById("stars").value = d.stars.replace("★", "");
+      document.getElementById("cs").value = d.cs ?? "N/A";
+      document.getElementById("ar").value = d.ar ?? "N/A";
+      document.getElementById("od").value = d.od ?? "N/A";
+      document.getElementById("bpm").value = d.bpm ?? "N/A";
+      document.getElementById("length").value = d.length ?? "N/A";
 
-  window.currentBeatmapData = {
-    preview_url: d.preview_url || "/",
-    cover_url: d.cover_url || "",
-    download_url: d.url || "#",
-    length: d.length || "N/A"
-  };
-
-  // Remove loading state
-  ['title','stars','cs','ar','od','bpm','length'].forEach(id => {
-    document.getElementById(id).classList.remove('loading');
-  });
-})
-
-
+      // Store beatmap data for adding to pool
       window.currentBeatmapData = {
-        preview_url: d.beatmapset?.preview_url || `https://b.ppy.sh/preview/${setId}.mp3`,
-        cover_url: d.beatmapset?.covers?.cover || `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg`,
-        download_url: `https://osu.ppy.sh/beatmapsets/${setId}/download?noVideo=1`,
-        length: d.total_length ?? "N/A"
+        preview_url: d.preview_url || "/",
+        cover_url: d.cover_url || "",
+        download_url: d.url || "#",
+        length: d.length || "N/A"
       };
 
+      // Remove loading state
       inputs.forEach(id => {
         document.getElementById(id).classList.remove('loading');
       });
     })
     .catch(err => {
       console.error("Beatmap fetch failed:", err);
-
       inputs.forEach(id => {
         const el = document.getElementById(id);
         el.value = '';

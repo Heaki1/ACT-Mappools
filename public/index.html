@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ACT Bounties</title>
+  <title>Bounties</title>
   <link rel="stylesheet" href="adminstyle.css" />
 </head>
 <body>
@@ -14,7 +14,7 @@
 
   <div class="container">
     <div class="header">
-      <h1>ACT Bounties Submission</h1>
+      <h1>Bounties Submission</h1>
       <p>Players can submit challenges for specific maps</p>
     </div>
 
@@ -64,14 +64,14 @@
           <input id="bpm" readonly />
         </div>
         <div class="form-group">
-         <label>Length</label>
-         <input id="length" readonly />
+          <label>Length</label>
+          <input id="length" readonly />
         </div>
       </div>
 
-     <div class="action-buttons">
-       <button class="btn btn-primary" onclick="addBounty()">➕ Submit Bounty</button>
-     </div>
+      <div class="action-buttons">
+        <button class="btn btn-primary" onclick="addBounty()">➕ Submit Bounty</button>
+      </div>
     </div>
 
     <div class="output-section">
@@ -82,8 +82,6 @@
 
   <script>
     let bounties = [];
-
-    // Load saved bounties
     const saved = localStorage.getItem("bounties");
     if (saved) {
       bounties = JSON.parse(saved);
@@ -130,7 +128,6 @@
             length: d.length || "N/A"
           };
 
-          // Remove loading state
           inputs.forEach(id => document.getElementById(id).classList.remove('loading'));
         })
         .catch(err => {
@@ -213,9 +210,67 @@
               <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${b.bpm}</span></div>
               <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${b.length}</span></div>
             </div>
+            <div class="beatmap-actions" style="margin-top:0.5rem;">
+              <button class="btn-small btn-edit" onclick="editBounty(${i})">✏️ Edit</button>
+              <button class="btn-small btn-delete" onclick="deleteBounty(${i})">🗑️ Delete</button>
+              ${b.preview_url && b.preview_url !== "/" ? `<button class="btn-small btn-preview" onclick="playBountyPreview('${b.preview_url}')">🔊 Preview</button>` : ''}
+            </div>
           </div>
         `;
       });
+    }
+
+    function editBounty(index) {
+      const bounty = bounties[index];
+
+      document.getElementById("url").value = bounty.url;
+      document.getElementById("challenge").value = bounty.challenge;
+      document.getElementById("mods").value = bounty.mods;
+      document.getElementById("difficulty").value = bounty.difficulty;
+      document.getElementById("title").value = bounty.title;
+      document.getElementById("stars").value = bounty.stars;
+      document.getElementById("cs").value = bounty.cs;
+      document.getElementById("ar").value = bounty.ar;
+      document.getElementById("od").value = bounty.od;
+      document.getElementById("bpm").value = bounty.bpm;
+      document.getElementById("length").value = bounty.length;
+
+      window.currentBeatmapData = {
+        preview_url: bounty.preview_url,
+        cover_url: bounty.cover_url,
+        download_url: bounty.download_url
+      };
+
+      bounties.splice(index, 1);
+      localStorage.setItem("bounties", JSON.stringify(bounties));
+      renderOutput();
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteBounty(index) {
+      if (confirm("Delete this bounty?")) {
+        bounties.splice(index, 1);
+        localStorage.setItem("bounties", JSON.stringify(bounties));
+        renderOutput();
+      }
+    }
+
+    let currentBountyAudio = null;
+    function playBountyPreview(previewUrl) {
+      if (currentBountyAudio) currentBountyAudio.pause();
+      currentBountyAudio = new Audio(previewUrl);
+      currentBountyAudio.volume = 0.5;
+      currentBountyAudio.play().catch(e => {
+        console.error("Preview error:", e);
+        alert("Could not play preview.");
+      });
+      setTimeout(() => {
+        if (currentBountyAudio) {
+          currentBountyAudio.pause();
+          currentBountyAudio = null;
+        }
+      }, 30000);
     }
   </script>
 </body>

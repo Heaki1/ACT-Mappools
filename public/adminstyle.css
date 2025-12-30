@@ -72,11 +72,8 @@ nav a {
 nav a::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: var(--accent-gradient);
+  inset: 0;
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
   border-radius: 12px;
   opacity: 0;
   transition: var(--transition);
@@ -90,7 +87,7 @@ nav a:hover::before {
 nav a:hover {
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(79, 172, 254, 0.3);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.45);
 }
 
 .container {

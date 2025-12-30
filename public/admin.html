@@ -126,7 +126,7 @@ function fetchInfo() {
     el.classList.add('loading');
   });
 
-  fetch("https://osu-api-proxy.onrender.com/api/beatmap/" + id)
+  fetch("/api/beatmap/" + id)
     .then(r => r.json())
     .then(d => {
   document.getElementById("title").value = d.title;

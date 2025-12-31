@@ -2,28 +2,32 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*' // change '*' to your domain if needed
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve main page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Rate limiter for API endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per IP per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, try again later.' }
 });
 
-// Serve admin pages
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-app.get('/bounties', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'bounties.html'));
-});
+// Serve main and public pages
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/bounties', (req, res) => res.sendFile(path.join(__dirname, 'public', 'bounties.html')));
 
 // osu! API credentials
 const client_id = process.env.OSU_CLIENT_ID;
@@ -44,23 +48,28 @@ async function getAccessToken() {
   const now = Date.now();
   if (access_token && now < token_expiry) return access_token;
 
-  const response = await axios.post('https://osu.ppy.sh/oauth/token', {
-    client_id,
-    client_secret,
-    grant_type: 'client_credentials',
-    scope: 'public'
-  });
-
-  access_token = response.data.access_token;
-  token_expiry = now + (response.data.expires_in * 1000) - 10000;
-  return access_token;
+  try {
+    const response = await axios.post('https://osu.ppy.sh/oauth/token', {
+      client_id,
+      client_secret,
+      grant_type: 'client_credentials',
+      scope: 'public'
+    });
+    access_token = response.data.access_token;
+    token_expiry = now + (response.data.expires_in * 1000) - 10000;
+    return access_token;
+  } catch (err) {
+    console.error("Failed to get osu! token:", err.response?.data || err.message);
+    throw new Error("OAuth token fetch failed");
+  }
 }
 
 // API route to fetch beatmap info
-app.get('/api/beatmap/:id', async (req, res) => {
+app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
   try {
     const token = await getAccessToken();
-    const id = req.params.id;
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid beatmap ID' });
 
     const response = await axios.get(`https://osu.ppy.sh/api/v2/beatmaps/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -68,7 +77,7 @@ app.get('/api/beatmap/:id', async (req, res) => {
 
     const bm = response.data;
 
-    const data = {
+    res.json({
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} [${bm.version}]`,
       stars: bm.difficulty_rating.toFixed(2),
       cs: bm.cs,
@@ -79,30 +88,27 @@ app.get('/api/beatmap/:id', async (req, res) => {
       url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
       cover_url: bm.beatmapset.covers.card
-    };
-
-    res.json(data);
+    });
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch beatmap info from osu! API' });
+    console.error("Beatmap fetch error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch beatmap info' });
   }
 });
 
 // API route to send submissions to Discord
-app.post('/api/send-discord', async (req, res) => {
+app.post('/api/send-discord', apiLimiter, async (req, res) => {
   const webhookUrl = process.env.DISCORD_WEBHOOK;
   const entry = req.body;
 
-  if (!entry || !entry.title) {
+  // Basic validation & sanitization
+  if (!entry || !entry.title || typeof entry.title !== 'string' || entry.title.length > 200) {
     return res.status(400).json({ error: "Invalid payload" });
   }
 
-  // Determine type for embed: Suggestion or Bounty
   const type = entry.type === "bounty" ? "Bounty" : "Suggestion";
-
   const embed = {
     title: `🎵 New ${type} Added: ${entry.title}`,
-    url: entry.url,
+    url: entry.url || '',
     color: type === "Bounty" ? 0xf1c40f : 0x8e44ad,
     fields: [
       { name: "Type", value: type, inline: true },

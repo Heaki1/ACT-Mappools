@@ -372,6 +372,31 @@ function deleteBeatmap(index) {
         }
       }, 30000);
     }
+    
+    // Event listeners for buttons
+document.getElementById('addToPoolBtn').addEventListener('click', addToPool);
+document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
+
+// Event delegation for dynamically created buttons
+document.getElementById('output').addEventListener('click', function(e) {
+  if (e.target.classList.contains('btn-edit') || e.target.closest('.btn-edit')) {
+    const btn = e.target.classList.contains('btn-edit') ? e.target : e.target.closest('.btn-edit');
+    const index = parseInt(btn.dataset.index);
+    editBeatmap(index);
+  }
+  
+  if (e.target.classList.contains('btn-delete') || e.target.closest('.btn-delete')) {
+    const btn = e.target.classList.contains('btn-delete') ? e.target : e.target.closest('.btn-delete');
+    const index = parseInt(btn.dataset.index);
+    deleteBeatmap(index);
+  }
+  
+  if (e.target.classList.contains('btn-preview') || e.target.closest('.btn-preview')) {
+    const btn = e.target.classList.contains('btn-preview') ? e.target : e.target.closest('.btn-preview');
+    const previewUrl = btn.dataset.previewUrl;
+    playPreview(previewUrl);
+  }
+});
   </script>
 </body>
 </html>

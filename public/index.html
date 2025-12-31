@@ -87,12 +87,6 @@
       renderOutput();
     }
 
-    const saved = localStorage.getItem("bounties");
-if (saved) {
-  bounties = JSON.parse(saved);
-  renderOutput();
-}
-
 // Add event listeners
 document.getElementById('url').addEventListener('blur', fetchInfo);
 document.getElementById('addBountyBtn').addEventListener('click', addBounty);

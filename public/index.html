@@ -21,7 +21,7 @@
       <div class="form-grid">
         <div class="form-group">
           <label>Beatmap URL</label>
-          <input id="url" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." onblur="fetchInfo()" />
+          <input id="url" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." />
         </div>
         <div class="form-group">
           <label>Challenge</label>
@@ -69,7 +69,7 @@
       </div>
 
       <div class="action-buttons">
-        <button class="btn btn-primary" onclick="addBounty()">➕ Submit Bounty</button>
+        <button class="btn btn-primary" id="addBountyBtn">➕ Submit Bounty</button>
       </div>
     </div>
 
@@ -86,6 +86,37 @@
       bounties = JSON.parse(saved);
       renderOutput();
     }
+
+    const saved = localStorage.getItem("bounties");
+if (saved) {
+  bounties = JSON.parse(saved);
+  renderOutput();
+}
+
+// Add event listeners
+document.getElementById('url').addEventListener('blur', fetchInfo);
+document.getElementById('addBountyBtn').addEventListener('click', addBounty);
+
+// Event delegation for dynamic buttons
+document.getElementById('output').addEventListener('click', function(e) {
+  if (e.target.classList.contains('btn-edit') || e.target.closest('.btn-edit')) {
+    const btn = e.target.classList.contains('btn-edit') ? e.target : e.target.closest('.btn-edit');
+    const index = parseInt(btn.dataset.index);
+    editBounty(index);
+  }
+  
+  if (e.target.classList.contains('btn-delete') || e.target.closest('.btn-delete')) {
+    const btn = e.target.classList.contains('btn-delete') ? e.target : e.target.closest('.btn-delete');
+    const index = parseInt(btn.dataset.index);
+    deleteBounty(index);
+  }
+  
+  if (e.target.classList.contains('btn-preview') || e.target.closest('.btn-preview')) {
+    const btn = e.target.classList.contains('btn-preview') ? e.target : e.target.closest('.btn-preview');
+    const previewUrl = btn.dataset.previewUrl;
+    playBountyPreview(previewUrl);
+  }
+});
 
     function extractId(url) {
       const match = url.match(/osu\/(\d+)/);
@@ -210,9 +241,9 @@
               <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${b.length}</span></div>
             </div>
             <div class="beatmap-actions" style="margin-top:0.5rem;">
-              <button class="btn-small btn-edit" onclick="editBounty(${i})">✏️ Edit</button>
-              <button class="btn-small btn-delete" onclick="deleteBounty(${i})">🗑️ Delete</button>
-              ${b.preview_url && b.preview_url !== "/" ? `<button class="btn-small btn-preview" onclick="playBountyPreview('${b.preview_url}')">🔊 Preview</button>` : ''}
+              <button class="btn-small btn-edit" data-index="${i}">✏️ Edit</button>
+              <button class="btn-small btn-delete" data-index="${i}">🗑️ Delete</button>
+              ${b.preview_url && b.preview_url !== "/" ? `<button class="btn-small btn-preview" data-preview-url="${b.preview_url}">🔊 Preview</button>` : ''}
             </div>
           </div>
         `;

@@ -294,34 +294,56 @@ function editBeatmap(index) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function downloadJSON() {
+// Replace the downloadJSON function in admin.html with this:
+
+async function downloadJSON() {
   const password = prompt("Enter admin password to download:");
-  const correctPassword = "heavensecret123"; // 🔒 Change this to your actual secret
-
-  if (password !== correctPassword) {
-    alert("Access denied. Incorrect admin password.");
-    return;
+  
+  if (!password) {
+    return; // User cancelled
   }
 
-  if (beatmaps.length === 0) {
-    alert("No beatmaps to download!");
-    return;
-  }
+  try {
+    // Verify password with backend
+    const response = await fetch("/api/admin/verify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ password })
+    });
 
-  // Clean stars
-  const cleanBeatmaps = beatmaps.map(bm => {
-    const cleaned = {};
-    for (const k in bm) {
-      cleaned[k] = typeof bm[k] === "string" ? bm[k].replace(/⭐/g, "") : bm[k];
+    if (!response.ok) {
+      alert("Access denied. Incorrect admin password.");
+      return;
     }
-    return cleaned;
-  });
 
-  const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
-  a.click();
+    // Password correct, proceed with download
+    if (beatmaps.length === 0) {
+      alert("No beatmaps to download!");
+      return;
+    }
+
+    // Clean stars
+    const cleanBeatmaps = beatmaps.map(bm => {
+      const cleaned = {};
+      for (const k in bm) {
+        cleaned[k] = typeof bm[k] === "string" ? bm[k].replace(/★/g, "") : bm[k];
+      }
+      return cleaned;
+    });
+
+    const blob = new Blob([JSON.stringify(cleanBeatmaps, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `mappool_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    console.log("✅ Successfully downloaded mappool JSON");
+  } catch (error) {
+    console.error("❌ Error verifying password:", error);
+    alert("Failed to verify password. Please check your connection.");
+  }
 }
 
 function deleteBeatmap(index) {

@@ -308,6 +308,63 @@ document.getElementById('output').addEventListener('click', function(e) {
         }
       }, 30000);
     }
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Check if user is already logged in
+      const userId = localStorage.getItem('act_user_id');
+      const modal = document.getElementById('user-registration-modal');
+      
+      if (!userId) {
+        // User not found in storage, show modal
+        modal.style.display = 'flex';
+      } else {
+        console.log('✅ User logged in:', localStorage.getItem('act_username'));
+      }
+
+      // 2. Handle Registration Submit
+      const form = document.getElementById('registration-form');
+      const input = document.getElementById('username-input');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = input.value.trim();
+
+        if (username.length < 3) return alert('Name too short!');
+
+        const btn = form.querySelector('button');
+        const originalText = btn.innerText;
+        btn.innerText = 'Registering...';
+        btn.disabled = true;
+
+        try {
+          const response = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ display_name: username })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // 3. Save ID to LocalStorage
+            localStorage.setItem('act_user_id', data.id);
+            localStorage.setItem('act_username', data.display_name);
+            localStorage.setItem('act_is_admin', data.is_admin);
+            
+            // Hide modal
+            modal.style.display = 'none';
+            alert(`Welcome, ${data.display_name}!`);
+          } else {
+            alert(data.error || 'Registration failed');
+          }
+        } catch (error) {
+          console.error('Registration error:', error);
+          alert('Failed to connect to server.');
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      });
+    });
   </script>
 </body>
 </html>

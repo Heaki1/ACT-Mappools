@@ -719,3 +719,67 @@ nav a:hover {
     padding: 1.5rem;
   }
 }
+/* --- User Registration Modal --- */
+#user-registration-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    border: 1px solid #333;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #ff66aa; /* Matching typical osu! theme */
+}
+
+.modal-content input {
+    width: 80%;
+    padding: 12px;
+    margin: 20px 0;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+}
+
+.modal-content input:focus {
+    border-color: #ff66aa;
+}
+
+.modal-content button {
+    background-color: #ff66aa;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: transform 0.1s, background-color 0.2s;
+}
+
+.modal-content button:hover {
+    background-color: #e05593;
+    transform: scale(1.05);
+}

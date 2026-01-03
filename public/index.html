@@ -92,12 +92,22 @@
   </div>
   
   <script>
-    let bounties = [];
-    const saved = localStorage.getItem("bounties");
-    if (saved) {
-      bounties = JSON.parse(saved);
-      renderOutput();
-    }
+let bounties = [];
+    
+    // Load from Server on startup
+    fetch('/api/beatmaps/list')
+      .then(res => res.json())
+      .then(data => {
+        // Map database fields back to frontend structure if names differ
+        bounties = data.map(b => ({
+            ...b,
+            challenge: b.skill, // DB uses 'skill', UI uses 'challenge'
+            difficulty: b.slot, // DB uses 'slot', UI uses 'difficulty'
+            mods: b.mod         // DB uses 'mod', UI uses 'mods'
+        }));
+        renderOutput();
+      })
+      .catch(err => console.error("Failed to load bounties", err));
 
 // Add event listeners
 document.getElementById('url').addEventListener('blur', fetchInfo);
@@ -176,12 +186,19 @@ document.getElementById('output').addEventListener('click', function(e) {
         });
     }
 
-    function addBounty() {
+    async function addBounty() {
+      const userId = localStorage.getItem('act_user_id');
+      if (!userId) {
+        alert("Please register a name first!");
+        document.getElementById('user-registration-modal').style.display = 'flex';
+        return;
+      }
+
       const entry = {
         url: document.getElementById("url").value,
-        challenge: document.getElementById("challenge").value,
-        mods: document.getElementById("mods").value,
-        difficulty: document.getElementById("difficulty").value,
+        skill: document.getElementById("challenge").value, // Mapped 'challenge' to 'skill' for DB
+        mod: document.getElementById("mods").value,        // Mapped 'mods' to 'mod'
+        slot: document.getElementById("difficulty").value, // Mapped 'difficulty' to 'slot'
         title: document.getElementById("title").value,
         stars: document.getElementById("stars").value,
         cs: document.getElementById("cs").value,
@@ -191,24 +208,44 @@ document.getElementById('output').addEventListener('click', function(e) {
         length: document.getElementById("length").value,
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
-        download_url: window.currentBeatmapData?.download_url || "",
-        type: "bounty"
+        type: "bounty",
+        submitted_by: userId // Include User ID
       };
 
-      if (!entry.url || !entry.challenge) {
+      if (!entry.url || !entry.skill) {
         alert("Please fill in the Beatmap URL and Challenge.");
         return;
       }
 
-      bounties.push(entry);
-      localStorage.setItem("bounties", JSON.stringify(bounties));
-      sendToDiscord(entry);
-      renderOutput();
+      // disable button to prevent double clicks
+      const btn = document.getElementById('addBountyBtn');
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
 
-      ['url','challenge','mods','difficulty','title','stars','cs','ar','od','bpm','length'].forEach(id => {
-        document.getElementById(id).value = '';
-      });
-      window.currentBeatmapData = null;
+      try {
+        // 1. Save to Database
+        const dbRes = await fetch('/api/beatmaps/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(entry)
+        });
+        
+        if (!dbRes.ok) throw new Error('Failed to save to database');
+
+        // 2. Send to Discord (Optional, keep if you want)
+        sendToDiscord(entry);
+
+        // 3. Refresh List (We will switch to loading from DB next)
+        alert('Bounty Submitted Successfully!');
+        location.reload(); // Simple reload to fetch new list
+
+      } catch (err) {
+        console.error(err);
+        alert('Error submitting bounty');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "➕ Submit Bounty";
+      }
     }
 
     function sendToDiscord(entry) {

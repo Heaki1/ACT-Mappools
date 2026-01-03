@@ -186,8 +186,10 @@ document.getElementById('output').addEventListener('click', function(e) {
         });
     }
 
-    async function addBounty() {
+  async function addBounty() {
       const userId = localStorage.getItem('act_user_id');
+      
+      // 1. Force registration if not logged in
       if (!userId) {
         alert("Please register a name first!");
         document.getElementById('user-registration-modal').style.display = 'flex';
@@ -196,9 +198,9 @@ document.getElementById('output').addEventListener('click', function(e) {
 
       const entry = {
         url: document.getElementById("url").value,
-        skill: document.getElementById("challenge").value, // Mapped 'challenge' to 'skill' for DB
-        mod: document.getElementById("mods").value,        // Mapped 'mods' to 'mod'
-        slot: document.getElementById("difficulty").value, // Mapped 'difficulty' to 'slot'
+        skill: document.getElementById("challenge").value, // DB expects 'skill'
+        mod: document.getElementById("mods").value,        // DB expects 'mod'
+        slot: document.getElementById("difficulty").value, // DB expects 'slot'
         title: document.getElementById("title").value,
         stars: document.getElementById("stars").value,
         cs: document.getElementById("cs").value,
@@ -209,7 +211,7 @@ document.getElementById('output').addEventListener('click', function(e) {
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
         type: "bounty",
-        submitted_by: userId // Include User ID
+        submitted_by: userId // We must send the user ID
       };
 
       if (!entry.url || !entry.skill) {
@@ -217,31 +219,34 @@ document.getElementById('output').addEventListener('click', function(e) {
         return;
       }
 
-      // disable button to prevent double clicks
       const btn = document.getElementById('addBountyBtn');
       btn.disabled = true;
       btn.innerText = "Submitting...";
 
       try {
-        // 1. Save to Database
-        const dbRes = await fetch('/api/beatmaps/submit', {
+        // 2. Send to Server (Database)
+        const response = await fetch('/api/beatmaps/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(entry)
         });
         
-        if (!dbRes.ok) throw new Error('Failed to save to database');
-
-        // 2. Send to Discord (Optional, keep if you want)
-        sendToDiscord(entry);
-
-        // 3. Refresh List (We will switch to loading from DB next)
-        alert('Bounty Submitted Successfully!');
-        location.reload(); // Simple reload to fetch new list
+        const result = await response.json();
+        
+        if (response.ok) {
+            // Optional: Still send to Discord
+            sendToDiscord(entry);
+            
+            alert('Bounty Submitted Successfully!');
+            // Reload page to fetch new list from server
+            location.reload();
+        } else {
+            alert('Error: ' + result.error);
+        }
 
       } catch (err) {
         console.error(err);
-        alert('Error submitting bounty');
+        alert('Failed to connect to server');
       } finally {
         btn.disabled = false;
         btn.innerText = "➕ Submit Bounty";

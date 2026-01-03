@@ -78,7 +78,19 @@
       <div id="output"></div>
     </div>
   </div>
-
+  
+      <div id="user-registration-modal">
+    <div class="modal-content">
+      <h2>👋 Welcome!</h2>
+      <p>Please enter a display name to vote and submit maps.</p>
+      <form id="registration-form">
+        <input type="text" id="username-input" placeholder="Username (e.g. Cookiezi)" required minlength="3" maxlength="20" autocomplete="off">
+        <br>
+        <button type="submit">Start Browsing</button>
+      </form>
+    </div>
+  </div>
+  
   <script>
     let bounties = [];
     const saved = localStorage.getItem("bounties");

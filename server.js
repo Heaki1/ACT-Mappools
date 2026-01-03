@@ -69,6 +69,7 @@ const discordLimiter = rateLimit({
 // --- Beatmap Management API Endpoints ---
 
 // Submit a new beatmap
+
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   const { title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by } = req.body;
 
@@ -84,6 +85,7 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
     
     const result = stmt.run(title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by);
     
+    console.log(`✅ New map submitted: ${title} (ID: ${result.lastInsertRowid})`);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
     console.error('Submit Error:', error);
@@ -94,12 +96,11 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
 // Get all approved/pending beatmaps
 app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   try {
-    // In this simple version, we return all maps. 
-    // Later we can filter by status='approved'
     const stmt = db.prepare('SELECT * FROM beatmaps ORDER BY created_at DESC');
     const maps = stmt.all();
     res.json(maps);
   } catch (error) {
+    console.error('Fetch Error:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });

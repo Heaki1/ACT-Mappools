@@ -219,6 +219,67 @@
         renderMaps(filtered);
       }
     }
+    // --- Comments Logic ---
+    function toggleComments(id) {
+      const section = document.getElementById(`comments-${id}`);
+      const isHidden = section.style.display === 'none' || section.style.display === '';
+      
+      section.style.display = isHidden ? 'block' : 'none';
+      
+      if (isHidden) {
+        loadComments(id);
+      }
+    }
+
+    async function loadComments(id) {
+      const list = document.getElementById(`list-${id}`);
+      try {
+        const res = await fetch(`/api/beatmaps/${id}/comments`);
+        const comments = await res.json();
+        
+        if (comments.length === 0) {
+          list.innerHTML = '<div style="color:#666; font-style:italic;">No comments yet.</div>';
+          return;
+        }
+
+        list.innerHTML = comments.map(c => `
+          <div class="comment">
+            <div class="comment-author">${c.display_name}</div>
+            <div class="comment-text">${c.comment_text}</div>
+          </div>
+        `).join('');
+      } catch (err) {
+        list.innerHTML = 'Error loading comments.';
+      }
+    }
+
+    async function postComment(e, id) {
+      e.preventDefault();
+      if (!currentUserId) return alert("Please register first!");
+
+      const input = e.target.querySelector('input');
+      const text = input.value;
+      const username = localStorage.getItem('act_username') || 'Anon';
+
+      try {
+        const res = await fetch(`/api/beatmaps/${id}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            user_id: currentUserId,
+            display_name: username,
+            comment_text: text
+          })
+        });
+
+        if (res.ok) {
+          input.value = ''; // Clear input
+          loadComments(id); // Reload list
+        } else {
+          alert("Failed to post");
+        }
+      } catch (err) { console.error(err); }
+    }
   </script>
 </body>
 </html>

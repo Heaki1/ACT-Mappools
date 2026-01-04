@@ -77,7 +77,7 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  try {
+ try {
     const stmt = db.prepare(`
       INSERT INTO beatmaps (title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -88,10 +88,15 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
     console.log(`✅ New map submitted: ${title} (ID: ${result.lastInsertRowid})`);
     res.json({ success: true, id: result.lastInsertRowid });
   } catch (error) {
+    // Check for Foreign Key error (User ID not found)
+    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
+        console.error('❌ Submission failed: User ID not found in DB');
+        return res.status(401).json({ error: 'User not registered. Please refresh to register again.' });
+    }
+
     console.error('Submit Error:', error);
     res.status(500).json({ error: 'Failed to submit beatmap' });
   }
-});
 
 // Get all approved/pending beatmaps
 app.get('/api/beatmaps/list', apiLimiter, (req, res) => {

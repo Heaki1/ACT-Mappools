@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Community Mappool</title>
+  <link rel="stylesheet" href="Bountiestyl.css" />
+  <style>
+    /* Specific styles for the community grid */
+    .beatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 2rem;
+    }
+    
+    .filter-bar {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #2a2a2a;
+      border-radius: 8px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-btn {
+      background: #333;
+      border: 1px solid #444;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .filter-btn.active {
+      background: #ff66aa;
+      border-color: #ff66aa;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/">➕ Submit Map</a>
+    <a href="/community" class="active">🗳️ Vote & Browse</a>
+    <a href="/admin">🔧 Admin</a>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>Community Mappool</h1>
+      <p>Vote on beatmaps for the next tournament pool</p>
+    </div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterMaps('all')">All</button>
+      <button class="filter-btn" onclick="filterMaps('bounty')">Bounties</button>
+      <button class="filter-btn" onclick="filterMaps('suggestion')">Suggestions</button>
+    </div>
+
+    <div id="beatmap-grid" class="beatmap-grid">
+      <div style="text-align:center; width:100%; color:#888;">Loading maps...</div>
+    </div>
+  </div>
+
+  <div id="user-registration-modal">
+    <div class="modal-content">
+      <h2>👋 Welcome!</h2>
+      <p>Please enter a display name to vote.</p>
+      <form id="registration-form">
+        <input type="text" id="username-input" placeholder="Username" required minlength="3" maxlength="20" autocomplete="off">
+        <br>
+        <button type="submit">Start Voting</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let allMaps = [];
+    const currentUserId = localStorage.getItem('act_user_id');
+
+    // 1. Fetch Maps on Load
+    document.addEventListener('DOMContentLoaded', async () => {
+      checkUser();
+      await loadMaps();
+    });
+
+    function checkUser() {
+      if (!currentUserId) {
+        document.getElementById('user-registration-modal').style.display = 'flex';
+      }
+      
+      // Handle Registration
+      document.getElementById('registration-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username-input').value;
+        try {
+          const res = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ display_name: username })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            localStorage.setItem('act_user_id', data.id);
+            localStorage.setItem('act_username', data.display_name);
+            location.reload();
+          }
+        } catch(err) { alert('Error registering'); }
+      });
+    }
+
+    async function loadMaps() {
+      try {
+        const res = await fetch('/api/beatmaps/list');
+        allMaps = await res.json();
+        renderMaps(allMaps);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('beatmap-grid').innerHTML = '<p>Error loading maps.</p>';
+      }
+    }
+
+    function renderMaps(maps) {
+      const grid = document.getElementById('beatmap-grid');
+      grid.innerHTML = '';
+
+      if (maps.length === 0) {
+        grid.innerHTML = '<p>No maps found.</p>';
+        return;
+      }
+
+      maps.forEach(map => {
+        const card = document.createElement('div');
+        card.className = 'beatmap-card';
+        card.innerHTML = `
+          ${map.cover_url ? `<img src="${map.cover_url}" class="cover-image">` : ''}
+          <div class="beatmap-header">
+            <div><strong>${map.title}</strong></div>
+            <div style="font-size:0.8rem; color:#aaa;">${map.mod || 'NM'} | ${map.stars}⭐</div>
+          </div>
+          
+          <div style="margin: 10px 0; font-size: 0.9rem;">
+            ${map.skill ? `🎯 ${map.skill}` : ''}
+          </div>
+
+          <div class="vote-container" id="vote-box-${map.id}">
+             <button class="vote-btn upvote" onclick="handleVote(${map.id}, 'upvote')">
+               🔼 <span class="count">...</span>
+             </button>
+             <button class="vote-btn downvote" onclick="handleVote(${map.id}, 'downvote')">
+               🔽 <span class="count">...</span>
+             </button>
+          </div>
+
+          <div class="beatmap-actions" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+             <button class="btn-small" onclick="alert('Comments coming soon!')">💬 Comments</button>
+             <a href="${map.url}" target="_blank" class="btn-small" style="text-decoration:none;">⬇️ osu!</a>
+          </div>
+        `;
+        grid.appendChild(card);
+        fetchVotes(map.id);
+      });
+    }
+
+    // --- Voting Logic ---
+    async function fetchVotes(id) {
+        if(!currentUserId) return;
+        try {
+            const res = await fetch(`/api/beatmaps/${id}/votes?user_id=${currentUserId}`);
+            const data = await res.json();
+            
+            const box = document.getElementById(`vote-box-${id}`);
+            if (!box) return;
+
+            const upBtn = box.querySelector('.upvote');
+            const downBtn = box.querySelector('.downvote');
+
+            upBtn.querySelector('.count').innerText = data.upvotes;
+            downBtn.querySelector('.count').innerText = data.downvotes;
+
+            upBtn.classList.remove('active');
+            downBtn.classList.remove('active');
+
+            if (data.user_vote === 'upvote') upBtn.classList.add('active');
+            if (data.user_vote === 'downvote') downBtn.classList.add('active');
+        } catch (e) { console.error(e); }
+    }
+
+    async function handleVote(id, type) {
+        if (!currentUserId) return alert("Please register first!");
+        try {
+            const res = await fetch(`/api/beatmaps/${id}/vote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: currentUserId, vote_type: type })
+            });
+            if (res.ok) fetchVotes(id);
+        } catch (e) { alert("Failed to vote"); }
+    }
+
+    // --- Filtering Logic ---
+    function filterMaps(type) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (type === 'all') {
+        renderMaps(allMaps);
+      } else {
+        const filtered = allMaps.filter(m => m.type === type);
+        renderMaps(filtered);
+      }
+    }
+  </script>
+</body>
+</html>

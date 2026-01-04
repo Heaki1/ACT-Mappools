@@ -153,10 +153,19 @@
           </div>
 
           <div class="beatmap-actions" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
-             <button class="btn-small" onclick="alert('Comments coming soon!')">💬 Comments</button>
+             <button class="btn-small" onclick="toggleComments(${map.id})">💬 Comments</button>
              <a href="${map.url}" target="_blank" class="btn-small" style="text-decoration:none;">⬇️ osu!</a>
           </div>
+
+          <div id="comments-${map.id}" class="comments-section">
+             <div class="comments-list" id="list-${map.id}">Loading...</div>
+             <form class="comment-form" onsubmit="postComment(event, ${map.id})">
+                <input type="text" class="comment-input" placeholder="Write a comment..." required>
+                <button type="submit" class="comment-submit">➤</button>
+             </form>
+          </div>
         `;
+        
         grid.appendChild(card);
         fetchVotes(map.id);
       });

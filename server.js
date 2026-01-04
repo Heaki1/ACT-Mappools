@@ -155,6 +155,37 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
 });
 
 // --- Existing Logic Below ---
+// --- Comment API Endpoints ---
+
+// Get comments for a beatmap
+app.get('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
+  try {
+    const stmt = db.prepare('SELECT * FROM comments WHERE beatmap_id = ? ORDER BY created_at DESC');
+    const comments = stmt.all(req.params.id);
+    res.json(comments);
+  } catch (error) {
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Add a comment
+app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
+  const { user_id, display_name, comment_text } = req.body;
+  const beatmapId = req.params.id;
+
+  if (!comment_text || comment_text.trim().length === 0) {
+    return res.status(400).json({ error: 'Comment cannot be empty' });
+  }
+
+  try {
+    const stmt = db.prepare('INSERT INTO comments (beatmap_id, user_id, display_name, comment_text) VALUES (?, ?, ?, ?)');
+    stmt.run(beatmapId, user_id, display_name, comment_text);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Comment error:', error);
+    res.status(500).json({ error: 'Failed to post comment' });
+  }
+});
 
 // Serve pages
 app.get('/', (req, res) => {

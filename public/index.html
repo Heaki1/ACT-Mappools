@@ -239,6 +239,14 @@ document.getElementById('output').addEventListener('click', function(e) {
             // Reload page to fetch new list from server
             location.reload();
         } else {
+          if (response.status === 401) {
+                // Server says our ID is invalid. Clear it and reload.
+                alert("Your session has expired (Server Restarted). Please register again.");
+                localStorage.removeItem('act_user_id');
+                localStorage.removeItem('act_username');
+                location.reload(); // This will trigger the registration modal again
+                return;
+            }
             alert('Error: ' + result.error);
         }
 

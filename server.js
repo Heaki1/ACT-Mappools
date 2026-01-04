@@ -99,30 +99,39 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
 // ==========================================
 
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
-  const { title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by } = req.body;
+  // We accept 'submitted_by_name' to restore the user if DB was wiped
+  const { title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by, submitted_by_name } = req.body;
 
   if (!title || !url || !submitted_by) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
+    // --- SELF HEALING FIX START ---
+    // 1. Check if user exists in the DB (Render might have wiped it)
+    const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(submitted_by);
+    
+    if (!userCheck) {
+        console.log(`⚠️ User ${submitted_by} not found in DB. Auto-restoring...`);
+        // 2. Re-create the user instantly so submission succeeds
+        const restoreUser = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
+        restoreUser.run(submitted_by, submitted_by_name || 'Unknown User');
+    }
+    // --- SELF HEALING FIX END ---
+
     const stmt = db.prepare(`
       INSERT INTO beatmaps (title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     const result = stmt.run(title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by);
+    
     console.log(`✅ New map submitted: ${title} (ID: ${result.lastInsertRowid})`);
     res.json({ success: true, id: result.lastInsertRowid });
 
   } catch (error) {
-    // FIX: Handle invalid user ID (e.g., after server restart on SQLite)
-    if (error.code === 'SQLITE_CONSTRAINT_FOREIGNKEY') {
-        console.error('❌ Submission failed: User ID not found in DB');
-        return res.status(401).json({ error: 'User not registered. Please refresh to register again.' });
-    }
     console.error('Submit Error:', error);
-    res.status(500).json({ error: 'Failed to submit beatmap' });
+    res.status(500).json({ error: 'Failed to submit beatmap. ' + error.message });
   }
 });
 
@@ -226,6 +235,12 @@ const client_secret = process.env.OSU_CLIENT_SECRET;
 let access_token = null;
 let token_expiry = 0;
 
+function formatSeconds(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 async function getAccessToken() {
   const now = Date.now();
   if (access_token && now < token_expiry) return access_token;
@@ -259,7 +274,7 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} [${bm.version}]`,
       stars: bm.difficulty_rating.toFixed(2),
       cs: bm.cs, ar: bm.ar, od: bm.accuracy, bpm: bm.bpm,
-      length: `${Math.floor(bm.total_length/60)}:${(bm.total_length%60).toString().padStart(2,'0')}`,
+      length: formatSeconds(bm.total_length || 0),
       url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
       cover_url: bm.beatmapset.covers.card

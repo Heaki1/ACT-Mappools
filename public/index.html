@@ -8,7 +8,6 @@
 </head>
 <body>
   <nav>
-    <nav>
     <a href="/" class="active">➕ Submit Map</a>
     <a href="/community">🗳️ Vote & Browse</a>
     <a href="/admin">🔧 Admin</a>
@@ -77,7 +76,7 @@
     </div>
   </div>
   
-      <div id="user-registration-modal">
+  <div id="user-registration-modal">
     <div class="modal-content">
       <h2>👋 Welcome!</h2>
       <p>Please enter a display name to vote and submit maps.</p>
@@ -90,48 +89,7 @@
   </div>
   
   <script>
-let bounties = [];
-    
-    // Load from Server on startup
-    fetch('/api/beatmaps/list')
-      .then(res => res.json())
-      .then(data => {
-        // Map database fields back to frontend structure if names differ
-        bounties = data.map(b => ({
-            ...b,
-            challenge: b.skill, // DB uses 'skill', UI uses 'challenge'
-            difficulty: b.slot, // DB uses 'slot', UI uses 'difficulty'
-            mods: b.mod         // DB uses 'mod', UI uses 'mods'
-        }));
-        renderOutput();
-      })
-      .catch(err => console.error("Failed to load bounties", err));
-
-// Add event listeners
-document.getElementById('url').addEventListener('blur', fetchInfo);
-document.getElementById('addBountyBtn').addEventListener('click', addBounty);
-
-// Event delegation for dynamic buttons
-document.getElementById('output').addEventListener('click', function(e) {
-  if (e.target.classList.contains('btn-edit') || e.target.closest('.btn-edit')) {
-    const btn = e.target.classList.contains('btn-edit') ? e.target : e.target.closest('.btn-edit');
-    const index = parseInt(btn.dataset.index);
-    editBounty(index);
-  }
-  
-  if (e.target.classList.contains('btn-delete') || e.target.closest('.btn-delete')) {
-    const btn = e.target.classList.contains('btn-delete') ? e.target : e.target.closest('.btn-delete');
-    const index = parseInt(btn.dataset.index);
-    deleteBounty(index);
-  }
-  
-  if (e.target.classList.contains('btn-preview') || e.target.closest('.btn-preview')) {
-    const btn = e.target.classList.contains('btn-preview') ? e.target : e.target.closest('.btn-preview');
-    const previewUrl = btn.dataset.previewUrl;
-    playBountyPreview(previewUrl);
-  }
-});
-
+    // --- Helper Functions ---
     function extractId(url) {
       const match = url.match(/osu\/(\d+)/);
       return match ? match[1] : null;
@@ -144,7 +102,6 @@ document.getElementById('output').addEventListener('click', function(e) {
 
     function fetchInfo() {
       const id = extractId(document.getElementById("url").value);
-      const setId = extractSetId(document.getElementById("url").value);
       if (!id) return;
 
       const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
@@ -184,10 +141,10 @@ document.getElementById('output').addEventListener('click', function(e) {
         });
     }
 
-  async function addBounty() {
+    async function addBounty() {
       const userId = localStorage.getItem('act_user_id');
-      
-      // 1. Force registration if not logged in
+      const username = localStorage.getItem('act_username'); // Grab username too
+
       if (!userId) {
         alert("Please register a name first!");
         document.getElementById('user-registration-modal').style.display = 'flex';
@@ -196,9 +153,9 @@ document.getElementById('output').addEventListener('click', function(e) {
 
       const entry = {
         url: document.getElementById("url").value,
-        skill: document.getElementById("challenge").value, // DB expects 'skill'
-        mod: document.getElementById("mods").value,        // DB expects 'mod'
-        slot: document.getElementById("difficulty").value, // DB expects 'slot'
+        skill: document.getElementById("challenge").value,
+        mod: document.getElementById("mods").value,
+        slot: document.getElementById("difficulty").value,
         title: document.getElementById("title").value,
         stars: document.getElementById("stars").value,
         cs: document.getElementById("cs").value,
@@ -209,7 +166,8 @@ document.getElementById('output').addEventListener('click', function(e) {
         preview_url: window.currentBeatmapData?.preview_url || "/",
         cover_url: window.currentBeatmapData?.cover_url || "",
         type: "bounty",
-        submitted_by: userId // We must send the user ID
+        submitted_by: userId,
+        submitted_by_name: username || "Unknown" // Send username for self-healing
       };
 
       if (!entry.url || !entry.skill) {
@@ -222,7 +180,6 @@ document.getElementById('output').addEventListener('click', function(e) {
       btn.innerText = "Submitting...";
 
       try {
-        // 2. Send to Server (Database)
         const response = await fetch('/api/beatmaps/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -232,22 +189,19 @@ document.getElementById('output').addEventListener('click', function(e) {
         const result = await response.json();
         
         if (response.ok) {
-            // Optional: Still send to Discord
+            // Optional: Send to Discord
             sendToDiscord(entry);
             
             alert('Bounty Submitted Successfully!');
-            // Reload page to fetch new list from server
-            location.reload();
+            
+            // Clear inputs
+            ['url','challenge','mods','difficulty','title','stars','cs','ar','od','bpm','length'].forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            window.currentBeatmapData = null;
+            
         } else {
-          if (response.status === 401) {
-                // Server says our ID is invalid. Clear it and reload.
-                alert("Your session has expired (Server Restarted). Please register again.");
-                localStorage.removeItem('act_user_id');
-                localStorage.removeItem('act_username');
-                location.reload(); // This will trigger the registration modal again
-                return;
-            }
-            alert('Error: ' + result.error);
+            alert('Error: ' + (result.error || "Unknown error"));
         }
 
       } catch (err) {
@@ -264,154 +218,60 @@ document.getElementById('output').addEventListener('click', function(e) {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(entry)
-      })
-      .then(r => r.json())
-      .then(data => console.log("✅ Bounty sent to Discord:", data))
-      .catch(err => console.error("❌ Discord error:", err));
+      }).catch(err => console.error("Discord error:", err));
     }
 
-    function renderOutput() {
-      const out = document.getElementById("output");
-      const count = document.getElementById("count");
-
-      count.textContent = bounties.length;
-      out.innerHTML = "";
-
-      bounties.forEach((b, i) => {
-        out.innerHTML += `
-          <div class="beatmap-card">
-            ${b.cover_url ? `<img src="${b.cover_url}" class="cover-image">` : ''}
-            <div class="beatmap-header">
-              <div><strong>${b.title}</strong></div>
-              <div style="font-size:0.85rem;color:#94a3b8;">${b.mods} | ${b.difficulty}</div>
-            </div>
-            <div style="margin-top:0.25rem;">🎯 Challenge: ${b.challenge}</div>
-            <div class="beatmap-stats">
-              <div class="stat-item"><span class="stat-label">Stars</span><span class="stat-value">${b.stars}</span></div>
-              <div class="stat-item"><span class="stat-label">CS</span><span class="stat-value">${b.cs}</span></div>
-              <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${b.ar}</span></div>
-              <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${b.od}</span></div>
-              <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${b.bpm}</span></div>
-              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${b.length}</span></div>
-            </div>
-            <div class="beatmap-actions" style="margin-top:0.5rem;">
-              <button class="btn-small btn-edit" data-index="${i}">✏️ Edit</button>
-              <button class="btn-small btn-delete" data-index="${i}">🗑️ Delete</button>
-              ${b.preview_url && b.preview_url !== "/" ? `<button class="btn-small btn-preview" data-preview-url="${b.preview_url}">🔊 Preview</button>` : ''}
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function editBounty(index) {
-      const bounty = bounties[index];
-
-      document.getElementById("url").value = bounty.url;
-      document.getElementById("challenge").value = bounty.challenge;
-      document.getElementById("mods").value = bounty.mods;
-      document.getElementById("difficulty").value = bounty.difficulty;
-      document.getElementById("title").value = bounty.title;
-      document.getElementById("stars").value = bounty.stars;
-      document.getElementById("cs").value = bounty.cs;
-      document.getElementById("ar").value = bounty.ar;
-      document.getElementById("od").value = bounty.od;
-      document.getElementById("bpm").value = bounty.bpm;
-      document.getElementById("length").value = bounty.length;
-
-      window.currentBeatmapData = {
-        preview_url: bounty.preview_url,
-        cover_url: bounty.cover_url,
-        download_url: bounty.download_url
-      };
-
-      bounties.splice(index, 1);
-      localStorage.setItem("bounties", JSON.stringify(bounties));
-      renderOutput();
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function deleteBounty(index) {
-      if (confirm("Delete this bounty?")) {
-        bounties.splice(index, 1);
-        localStorage.setItem("bounties", JSON.stringify(bounties));
-        renderOutput();
-      }
-    }
-
-    let currentBountyAudio = null;
     function playBountyPreview(previewUrl) {
-      if (currentBountyAudio) currentBountyAudio.pause();
-      currentBountyAudio = new Audio(previewUrl);
-      currentBountyAudio.volume = 0.5;
-      currentBountyAudio.play().catch(e => {
-        console.error("Preview error:", e);
-        alert("Could not play preview.");
-      });
-      setTimeout(() => {
-        if (currentBountyAudio) {
-          currentBountyAudio.pause();
-          currentBountyAudio = null;
-        }
-      }, 30000);
+      if (window.currentBountyAudio) window.currentBountyAudio.pause();
+      window.currentBountyAudio = new Audio(previewUrl);
+      window.currentBountyAudio.volume = 0.5;
+      window.currentBountyAudio.play().catch(e => console.error("Preview error:", e));
     }
+
+    // --- Page Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. Check if user is already logged in
-      const userId = localStorage.getItem('act_user_id');
-      const modal = document.getElementById('user-registration-modal');
-      
-      if (!userId) {
-        // User not found in storage, show modal
-        modal.style.display = 'flex';
-      } else {
-        console.log('✅ User logged in:', localStorage.getItem('act_username'));
-      }
+        // Event Listeners
+        document.getElementById('url').addEventListener('blur', fetchInfo);
+        document.getElementById('addBountyBtn').addEventListener('click', addBounty);
 
-      // 2. Handle Registration Submit
-      const form = document.getElementById('registration-form');
-      const input = document.getElementById('username-input');
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = input.value.trim();
-
-        if (username.length < 3) return alert('Name too short!');
-
-        const btn = form.querySelector('button');
-        const originalText = btn.innerText;
-        btn.innerText = 'Registering...';
-        btn.disabled = true;
-
-        try {
-          const response = await fetch('/api/users/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ display_name: username })
-          });
-
-          const data = await response.json();
-
-          if (response.ok) {
-            // 3. Save ID to LocalStorage
-            localStorage.setItem('act_user_id', data.id);
-            localStorage.setItem('act_username', data.display_name);
-            localStorage.setItem('act_is_admin', data.is_admin);
-            
-            // Hide modal
-            modal.style.display = 'none';
-            alert(`Welcome, ${data.display_name}!`);
-          } else {
-            alert(data.error || 'Registration failed');
-          }
-        } catch (error) {
-          console.error('Registration error:', error);
-          alert('Failed to connect to server.');
-        } finally {
-          btn.innerText = originalText;
-          btn.disabled = false;
+        // User Check
+        const userId = localStorage.getItem('act_user_id');
+        const modal = document.getElementById('user-registration-modal');
+        
+        if (!userId) {
+            modal.style.display = 'flex';
+        } else {
+            console.log('✅ Logged in as:', localStorage.getItem('act_username'));
         }
-      });
+
+        // Registration Logic
+        document.getElementById('registration-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username-input').value.trim();
+            if (username.length < 3) return alert('Name too short!');
+
+            try {
+                const response = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ display_name: username })
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('act_user_id', data.id);
+                    localStorage.setItem('act_username', data.display_name);
+                    localStorage.setItem('act_is_admin', data.is_admin);
+                    modal.style.display = 'none';
+                    alert(`Welcome, ${data.display_name}!`);
+                } else {
+                    alert(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Failed to connect to server.');
+            }
+        });
     });
   </script>
 </body>

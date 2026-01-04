@@ -783,3 +783,64 @@ nav a:hover {
     background-color: #e05593;
     transform: scale(1.05);
 }
+
+/* --- Comments Section --- */
+.comments-section {
+    display: none; /* Hidden by default */
+    background: #222;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #333;
+}
+
+.comments-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.comment {
+    background: #2a2a2a;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.comment-author {
+    color: #ff66aa;
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+}
+
+.comment-text {
+    color: #ddd;
+    word-wrap: break-word;
+}
+
+.comment-form {
+    display: flex;
+    gap: 5px;
+}
+
+.comment-input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    background: #1a1a1a;
+    color: white;
+}
+
+.comment-submit {
+    background: #ff66aa;
+    border: none;
+    color: white;
+    padding: 0 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}

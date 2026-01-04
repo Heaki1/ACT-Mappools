@@ -105,6 +105,10 @@ app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   }
 });
 
+app.get('/community', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'community.html'));
+});
+
 // Register a new user
 app.post('/api/users/register', apiLimiter, (req, res) => {
   const { display_name } = req.body;

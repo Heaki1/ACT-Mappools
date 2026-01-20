@@ -75,7 +75,7 @@
       </div>
     </div>
 
-   //  Output section 
+    <!-- Output section -->
     <div class="output-section">
       <h2 class="section-title">💰 Submitted Bounties (<span id="count">0</span>)</h2>
       <div id="output"></div>
@@ -96,15 +96,21 @@
   </div>
 
   <script>
-    // state for bounties list
     let bounties = [];
     let currentAudio = null;
-
+    
     async function loadBounties() {
       try {
-        const res = await fetch('/api/beatmaps/list');
+        const myId = localStorage.getItem('act_user_id');
+        if (!myId) {
+          bounties = [];
+          renderOutput();
+          return;
+        }
+
+        const res = await fetch(`/api/beatmaps/my?user_id=${encodeURIComponent(myId)}&type=bounty`);
         const data = await res.json();
-        bounties = (Array.isArray(data) ? data : []).filter(x => x.type === "bounty");
+        bounties = Array.isArray(data) ? data : [];
         renderOutput();
       } catch (err) {
         console.error("Failed to load bounties:", err);
@@ -154,7 +160,6 @@
               </div>
             </div>
 
-            <!-- ✅ Added: actions -->
             <div class="beatmap-actions" style="margin-top: 0.5rem;">
               <button class="btn-small btn-edit" onclick="editBounty(${m.id})">✏️ Edit</button>
               <button class="btn-small btn-delete" onclick="deleteBounty(${m.id})">🗑️ Delete</button>
@@ -179,7 +184,7 @@
       }
     }
 
-    //  fill form, delete old, resubmit
+    // Fill form, delete old, resubmit
     async function editBounty(id) {
       const b = bounties.find(x => x.id === id);
       if (!b) return;
@@ -201,26 +206,18 @@
         cover_url: b.cover_url || ""
       };
 
-      // delete old record 
       await deleteBounty(id, { silentRefresh: true });
-
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    
+
     async function deleteBounty(id, opts = {}) {
       if (!opts.silentRefresh) {
         const ok = confirm("Are you sure you want to delete this bounty?");
         if (!ok) return;
       }
 
-      const adminPassword = prompt("Admin password required:");
-      if (!adminPassword) return;
-
       try {
-        const res = await fetch(`/api/beatmaps/${id}`, {
-          method: "DELETE",
-          headers: { "x-admin-password": adminPassword }
-        });
+        const res = await fetch(`/api/beatmaps/${id}`, { method: "DELETE" });
         const data = await res.json();
 
         if (!res.ok) {
@@ -235,14 +232,9 @@
       }
     }
 
-    // --- Helper Functions ---
+    // Helper
     function extractId(url) {
       const match = url.match(/osu\/(\d+)/);
-      return match ? match[1] : null;
-    }
-
-    function extractSetId(url) {
-      const match = url.match(/beatmapsets\/(\d+)/);
       return match ? match[1] : null;
     }
 
@@ -337,10 +329,8 @@
         if (response.ok) {
           sendToDiscord(entry);
           alert('Bounty Submitted Successfully!');
-
           loadBounties();
 
-          // Clear inputs
           ['url','challenge','mods','difficulty','title','stars','cs','ar','od','bpm','length'].forEach(id => {
             document.getElementById(id).value = '';
           });
@@ -367,25 +357,20 @@
       }).catch(err => console.error("Discord error:", err));
     }
 
-    // --- Page Initialization ---
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('url').addEventListener('blur', fetchInfo);
       document.getElementById('addBountyBtn').addEventListener('click', addBounty);
 
-      //  load existing bounties
+      // IMPORTANT: load after user exists
       loadBounties();
 
-      // User Check
       const userId = localStorage.getItem('act_user_id');
       const modal = document.getElementById('user-registration-modal');
 
       if (!userId) {
         modal.style.display = 'flex';
-      } else {
-        console.log('✅ Logged in as:', localStorage.getItem('act_username'));
       }
 
-      // Registration Logic
       document.getElementById('registration-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username-input').value.trim();
@@ -405,6 +390,9 @@
             localStorage.setItem('act_is_admin', data.is_admin);
             modal.style.display = 'none';
             alert(`Welcome, ${data.display_name}!`);
+
+            // load their list
+            loadBounties();
           } else {
             alert(data.error || 'Registration failed');
           }

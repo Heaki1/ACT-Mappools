@@ -14,7 +14,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // still used for /api/admin/login only
 
-// Trust proxy - CRITICAL for Render
 app.set('trust proxy', 1);
 
 // Security Headers
@@ -27,8 +26,6 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'", "https://osu.ppy.sh", "https://b.ppy.sh", "https://*.onrender.com"],
-
-      // ✅ FIX: allow audio preview from osu domains
       mediaSrc: ["'self'", "https://b.ppy.sh", "https:"]
     }
   },
@@ -64,9 +61,7 @@ const discordLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development',
 });
 
-// =======================
 // USER SYSTEM
-// =======================
 
 app.post('/api/users/register', apiLimiter, (req, res) => {
   const { display_name } = req.body;
@@ -98,9 +93,7 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
   }
 });
 
-// =======================
 // BEATMAP MANAGEMENT
-// =======================
 
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   // We accept 'submitted_by_name' to restore the user if DB was wiped (Self-Healing)
@@ -167,7 +160,7 @@ app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   }
 });
 
-// ✅ NEW: privacy endpoint (only the user's submissions)
+// privacy endpoint 
 app.get('/api/beatmaps/my', apiLimiter, (req, res) => {
   const userId = req.query.user_id;
   const type = req.query.type; // optional: bounty / suggestion
@@ -194,9 +187,7 @@ app.get('/api/beatmaps/my', apiLimiter, (req, res) => {
   }
 });
 
-// =======================
-// ADMIN DASHBOARD API (login only)
-// =======================
+// ADMIN DASHBOARD API 
 
 app.post('/api/admin/login', apiLimiter, (req, res) => {
   const { password } = req.body;
@@ -207,7 +198,7 @@ app.post('/api/admin/login', apiLimiter, (req, res) => {
   }
 });
 
-// ✅ Delete Map (NO admin password now)
+// Delete Map 
 app.delete('/api/beatmaps/:id', apiLimiter, (req, res) => {
   try {
     // Delete related data first to respect Foreign Keys
@@ -229,9 +220,7 @@ app.delete('/api/beatmaps/:id', apiLimiter, (req, res) => {
   }
 });
 
-// =======================
 // VOTING SYSTEM
-// =======================
 
 app.get('/api/beatmaps/:id/votes', apiLimiter, (req, res) => {
   const beatmapId = req.params.id;
@@ -282,9 +271,7 @@ app.post('/api/beatmaps/:id/vote', apiLimiter, (req, res) => {
   }
 });
 
-// =======================
 // COMMENTS SYSTEM
-// =======================
 
 app.get('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   try {
@@ -316,9 +303,7 @@ app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   }
 });
 
-// =======================
 // OSU API PROXY
-// =======================
 
 const client_id = process.env.OSU_CLIENT_ID;
 const client_secret = process.env.OSU_CLIENT_SECRET;
@@ -378,9 +363,6 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
   }
 });
 
-// =======================
-// UTILS & PAGES
-// =======================
 
 // Discord Webhook
 const discord_webhook = process.env.DISCORD_WEBHOOK;

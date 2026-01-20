@@ -61,9 +61,7 @@ const discordLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development',
 });
 
-// ==========================================
-// 👤 USER SYSTEM
-// ==========================================
+//  USER SYSTEM
 
 app.post('/api/users/register', apiLimiter, (req, res) => {
   const { display_name } = req.body;
@@ -95,9 +93,8 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
   }
 });
 
-// ==========================================
-// 🎵 BEATMAP MANAGEMENT (Public)
-// ==========================================
+
+// BEATMAP MANAGEMENT 
 
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   // We accept 'submitted_by_name' to restore the user if DB was wiped (Self-Healing)
@@ -138,17 +135,22 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
 
 app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   try {
-    const stmt = db.prepare('SELECT * FROM beatmaps ORDER BY created_at DESC');
-    const maps = stmt.all();
-    res.json(maps);
-  } catch (error) {
+    const stmt = db.prepare(`
+      SELECT 
+        b.*,
+        u.display_name AS submitted_by_name
+      FROM beatmaps b
+      LEFT JOIN users u ON u.id = b.submitted_by
+      ORDER BY b.created_at DESC
+    `);
+    res.json(stmt.all());
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Database error' });
   }
 });
 
-// ==========================================
-// 🔐 ADMIN DASHBOARD API (Restored!)
-// ==========================================
+// ADMIN DASHBOARD API 
 
 // 1. Admin Login
 app.post('/api/admin/login', apiLimiter, (req, res) => {
@@ -189,9 +191,7 @@ app.delete('/api/beatmaps/:id', apiLimiter, (req, res) => {
     }
 });
 
-// ==========================================
-// 🗳️ VOTING SYSTEM
-// ==========================================
+// VOTING SYSTEM
 
 app.get('/api/beatmaps/:id/votes', apiLimiter, (req, res) => {
   const beatmapId = req.params.id;
@@ -242,9 +242,8 @@ app.post('/api/beatmaps/:id/vote', apiLimiter, (req, res) => {
   }
 });
 
-// ==========================================
-// 💬 COMMENTS SYSTEM
-// ==========================================
+//  COMMENTS SYSTEM
+
 
 app.get('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   try {
@@ -276,9 +275,7 @@ app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   }
 });
 
-// ==========================================
-// 📡 OSU API PROXY
-// ==========================================
+//  OSU API PROXY
 
 const client_id = process.env.OSU_CLIENT_ID;
 const client_secret = process.env.OSU_CLIENT_SECRET;
@@ -335,9 +332,8 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
   }
 });
 
-// ==========================================
-// 🔧 UTILS & PAGES
-// ==========================================
+
+// UTILS & PAGES
 
 // Discord Webhook
 const discord_webhook = process.env.DISCORD_WEBHOOK;

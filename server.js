@@ -343,22 +343,28 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
 const discord_webhook = process.env.DISCORD_WEBHOOK;
 app.post('/api/send-discord', discordLimiter, async (req, res) => {
   if (!discord_webhook) return res.status(503).json({ error: 'No webhook' });
-  
+
   try {
     const entry = req.body;
+
     const embed = {
-      title: `🎵 New ${entry.type === "bounty" ? "Bounty" : "Suggestion"}: ${entry.title}`,
+      title: `💰 New ${entry.type === "bounty" ? "Bounty" : "Suggestion"}: ${entry.title}`,
       url: entry.url,
       color: entry.type === "bounty" ? 0xf1c40f : 0x8e44ad,
       fields: [
-        { name: "Skill", value: entry.skill || "N/A", inline: true },
-        { name: "Stars", value: entry.stars || "N/A", inline: true }
+        { name: "👤 Submitted by", value: entry.submitted_by_name || "Unknown", inline: true },
+        { name: "🎯 Challenge", value: entry.skill || "N/A", inline: true },
+        { name: "🧩 Mods", value: entry.mod || "NM", inline: true },
+        { name: "⭐ Stars", value: entry.stars || "N/A", inline: true },
+        { name: "🔗 Link", value: entry.url || "N/A", inline: false }
       ],
       thumbnail: { url: entry.cover_url || "" }
     };
+
     await axios.post(discord_webhook, { embeds: [embed] });
     res.json({ success: true });
   } catch (err) {
+    console.error("Discord webhook failed:", err);
     res.status(500).json({ error: "Failed to send to Discord" });
   }
 });

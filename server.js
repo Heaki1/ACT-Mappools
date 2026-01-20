@@ -12,7 +12,7 @@ const db = require('./database');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // Set this in Render Environment Variables
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // still used for /api/admin/login only
 
 // Trust proxy - CRITICAL for Render
 app.set('trust proxy', 1);
@@ -26,7 +26,10 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
-      connectSrc: ["'self'", "https://osu.ppy.sh", "https://b.ppy.sh", "https://*.onrender.com"]
+      connectSrc: ["'self'", "https://osu.ppy.sh", "https://b.ppy.sh", "https://*.onrender.com"],
+
+      // ✅ FIX: allow audio preview from osu domains
+      mediaSrc: ["'self'", "https://b.ppy.sh", "https:"]
     }
   },
   crossOriginEmbedderPolicy: false
@@ -34,13 +37,13 @@ app.use(helmet({
 
 // CORS
 app.use(cors({
-  origin: function(origin, callback) {
+  origin: function (origin, callback) {
     if (!origin) return callback(null, true);
     callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-password']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10kb' }));
@@ -61,7 +64,9 @@ const discordLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development',
 });
 
-//  USER SYSTEM
+// =======================
+// USER SYSTEM
+// =======================
 
 app.post('/api/users/register', apiLimiter, (req, res) => {
   const { display_name } = req.body;
@@ -71,7 +76,7 @@ app.post('/api/users/register', apiLimiter, (req, res) => {
   }
 
   const newId = uuidv4();
-  
+
   try {
     const stmt = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
     stmt.run(newId, display_name);
@@ -93,12 +98,17 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
   }
 });
 
-
-// BEATMAP MANAGEMENT 
+// =======================
+// BEATMAP MANAGEMENT
+// =======================
 
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   // We accept 'submitted_by_name' to restore the user if DB was wiped (Self-Healing)
-  const { title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by, submitted_by_name } = req.body;
+  const {
+    title, url, stars, cs, ar, od, bpm, length,
+    slot, mod, skill, notes, cover_url, preview_url,
+    type, submitted_by, submitted_by_name
+  } = req.body;
 
   if (!title || !url || !submitted_by) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -106,24 +116,30 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
 
   try {
     // --- SELF HEALING FIX START ---
-    // 1. Check if user exists in the DB (Render might have wiped it)
     const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(submitted_by);
-    
+
     if (!userCheck) {
-        console.log(`⚠️ User ${submitted_by} not found in DB. Auto-restoring...`);
-        // 2. Re-create the user instantly so submission succeeds
-        const restoreUser = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
-        restoreUser.run(submitted_by, submitted_by_name || 'Unknown User');
+      console.log(`⚠️ User ${submitted_by} not found in DB. Auto-restoring...`);
+      const restoreUser = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
+      restoreUser.run(submitted_by, submitted_by_name || 'Unknown User');
     }
     // --- SELF HEALING FIX END ---
 
     const stmt = db.prepare(`
-      INSERT INTO beatmaps (title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by)
+      INSERT INTO beatmaps (
+        title, url, stars, cs, ar, od, bpm, length,
+        slot, mod, skill, notes, cover_url, preview_url,
+        type, submitted_by
+      )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
-    const result = stmt.run(title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by);
-    
+
+    const result = stmt.run(
+      title, url, stars, cs, ar, od, bpm, length,
+      slot, mod, skill, notes, cover_url, preview_url,
+      type, submitted_by
+    );
+
     console.log(`✅ New map submitted: ${title} (ID: ${result.lastInsertRowid})`);
     res.json({ success: true, id: result.lastInsertRowid });
 
@@ -133,6 +149,7 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   }
 });
 
+// Global list (kept for community page etc.)
 app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   try {
     const stmt = db.prepare(`
@@ -150,59 +167,82 @@ app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   }
 });
 
-// ADMIN DASHBOARD API 
+// ✅ NEW: privacy endpoint (only the user's submissions)
+app.get('/api/beatmaps/my', apiLimiter, (req, res) => {
+  const userId = req.query.user_id;
+  const type = req.query.type; // optional: bounty / suggestion
 
-// 1. Admin Login
+  if (!userId) return res.status(400).json({ error: 'user_id required' });
+
+  try {
+    const stmt = db.prepare(`
+      SELECT 
+        b.*,
+        u.display_name AS submitted_by_name
+      FROM beatmaps b
+      LEFT JOIN users u ON u.id = b.submitted_by
+      WHERE b.submitted_by = ?
+      ${type ? "AND b.type = ?" : ""}
+      ORDER BY b.created_at DESC
+    `);
+
+    const rows = type ? stmt.all(userId, type) : stmt.all(userId);
+    res.json(rows);
+  } catch (err) {
+    console.error("My beatmaps fetch failed:", err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// =======================
+// ADMIN DASHBOARD API (login only)
+// =======================
+
 app.post('/api/admin/login', apiLimiter, (req, res) => {
-    const { password } = req.body;
-    // Check against Environment Variable or default
-    if (password === ADMIN_PASSWORD) {
-        res.json({ success: true, token: 'admin-session-active' });
-    } else {
-        res.status(401).json({ error: 'Wrong password' });
-    }
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    res.json({ success: true, token: 'admin-session-active' });
+  } else {
+    res.status(401).json({ error: 'Wrong password' });
+  }
 });
 
-// 2. Delete Map (Protected)
+// ✅ Delete Map (NO admin password now)
 app.delete('/api/beatmaps/:id', apiLimiter, (req, res) => {
-    const password = req.headers['x-admin-password'];
-    
-    if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({ error: 'Unauthorized: Wrong Password' });
-    }
+  try {
+    // Delete related data first to respect Foreign Keys
+    db.prepare('DELETE FROM votes WHERE beatmap_id = ?').run(req.params.id);
+    db.prepare('DELETE FROM comments WHERE beatmap_id = ?').run(req.params.id);
 
-    try {
-        // Delete related data first to respect Foreign Keys
-        db.prepare('DELETE FROM votes WHERE beatmap_id = ?').run(req.params.id);
-        db.prepare('DELETE FROM comments WHERE beatmap_id = ?').run(req.params.id);
-        
-        // Delete the map
-        const info = db.prepare('DELETE FROM beatmaps WHERE id = ?').run(req.params.id);
-        
-        if (info.changes > 0) {
-            console.log(`🗑️ Map ${req.params.id} deleted by Admin`);
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ error: 'Map not found' });
-        }
-    } catch (err) {
-        console.error("Delete failed:", err);
-        res.status(500).json({ error: 'Delete failed' });
+    // Delete the map
+    const info = db.prepare('DELETE FROM beatmaps WHERE id = ?').run(req.params.id);
+
+    if (info.changes > 0) {
+      console.log(`🗑️ Map ${req.params.id} deleted`);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Map not found' });
     }
+  } catch (err) {
+    console.error("Delete failed:", err);
+    res.status(500).json({ error: 'Delete failed' });
+  }
 });
 
+// =======================
 // VOTING SYSTEM
+// =======================
 
 app.get('/api/beatmaps/:id/votes', apiLimiter, (req, res) => {
   const beatmapId = req.params.id;
   try {
     const upvotes = db.prepare("SELECT COUNT(*) as count FROM votes WHERE beatmap_id = ? AND vote_type = 'upvote'").get(beatmapId);
     const downvotes = db.prepare("SELECT COUNT(*) as count FROM votes WHERE beatmap_id = ? AND vote_type = 'downvote'").get(beatmapId);
-    
+
     let userVote = null;
     if (req.query.user_id) {
-        const vote = db.prepare("SELECT vote_type FROM votes WHERE beatmap_id = ? AND user_id = ?").get(beatmapId, req.query.user_id);
-        if (vote) userVote = vote.vote_type;
+      const vote = db.prepare("SELECT vote_type FROM votes WHERE beatmap_id = ? AND user_id = ?").get(beatmapId, req.query.user_id);
+      if (vote) userVote = vote.vote_type;
     }
 
     res.json({ upvotes: upvotes.count, downvotes: downvotes.count, user_vote: userVote });
@@ -222,7 +262,7 @@ app.post('/api/beatmaps/:id/vote', apiLimiter, (req, res) => {
     // Self-healing check for voters too
     const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
     if (!userCheck) {
-         db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)').run(user_id, 'Voter');
+      db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)').run(user_id, 'Voter');
     }
 
     const existingVote = db.prepare('SELECT vote_type FROM votes WHERE beatmap_id = ? AND user_id = ?').get(beatmapId, user_id);
@@ -242,8 +282,9 @@ app.post('/api/beatmaps/:id/vote', apiLimiter, (req, res) => {
   }
 });
 
-//  COMMENTS SYSTEM
-
+// =======================
+// COMMENTS SYSTEM
+// =======================
 
 app.get('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   try {
@@ -264,7 +305,7 @@ app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
     // Self-healing check for comments
     const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(user_id);
     if (!userCheck) {
-         db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)').run(user_id, display_name || 'Commenter');
+      db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)').run(user_id, display_name || 'Commenter');
     }
 
     const stmt = db.prepare('INSERT INTO comments (beatmap_id, user_id, display_name, comment_text) VALUES (?, ?, ?, ?)');
@@ -275,7 +316,9 @@ app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   }
 });
 
-//  OSU API PROXY
+// =======================
+// OSU API PROXY
+// =======================
 
 const client_id = process.env.OSU_CLIENT_ID;
 const client_secret = process.env.OSU_CLIENT_SECRET;
@@ -320,7 +363,10 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
     res.json({
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} [${bm.version}]`,
       stars: bm.difficulty_rating.toFixed(2),
-      cs: bm.cs, ar: bm.ar, od: bm.accuracy, bpm: bm.bpm,
+      cs: bm.cs,
+      ar: bm.ar,
+      od: bm.accuracy,
+      bpm: bm.bpm,
       length: formatSeconds(bm.total_length || 0),
       url: `https://osu.ppy.sh/beatmapsets/${bm.beatmapset.id}#osu/${bm.id}`,
       preview_url: bm.beatmapset.preview_url,
@@ -332,8 +378,9 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
   }
 });
 
-
+// =======================
 // UTILS & PAGES
+// =======================
 
 // Discord Webhook
 const discord_webhook = process.env.DISCORD_WEBHOOK;
@@ -368,8 +415,8 @@ app.post('/api/send-discord', discordLimiter, async (req, res) => {
 // Serve HTML Pages
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/community', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html'))); // Tournament suggestions
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html'))); // Admin Management
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 
 // Health Check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));

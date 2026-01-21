@@ -269,6 +269,8 @@
         deleteBounty(btn.dataset.id);
       } else if (action === "preview") {
         playPreview(btn.dataset.preview);
+      } else if (action === "replay") {
+        openReplayPreview(btn.dataset.b);
       }
     });
   });

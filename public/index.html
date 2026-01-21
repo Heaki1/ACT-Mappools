@@ -6,12 +6,13 @@
   <title>Bounties</title>
   <link rel="stylesheet" href="Bountiestyl.css" />
 </head>
+
 <body>
-<nav>
-  <a href="/" class="active">💰 Submit Bounties</a>
-  <a href="/admin">📝 Mappool Suggestions</a>
-  <a href="/community">📌 Vote & Browse</a>
-</nav>
+  <nav>
+    <a href="/" class="active">💰 Submit Bounties</a>
+    <a href="/admin">📝 Mappool Suggestions</a>
+    <a href="/community">📌 Vote & Browse</a>
+  </nav>
 
   <div class="container">
     <div class="header">
@@ -25,18 +26,22 @@
           <label>Beatmap URL</label>
           <input id="url" placeholder="https://osu.ppy.sh/beatmapsets/...#osu/..." />
         </div>
+
         <div class="form-group">
           <label>Challenge</label>
           <input id="challenge" placeholder="e.g. FC, #1 Algeria, Best Acc" />
         </div>
+
         <div class="form-group">
           <label>Mods</label>
           <input id="mods" placeholder="e.g. NM, HD, HR, DT" />
         </div>
+
         <div class="form-group">
           <label>Map Difficulty</label>
           <input id="difficulty" placeholder="e.g. Insane, Expert" />
         </div>
+
         <div class="form-group">
           <label>Song Title</label>
           <input id="title" readonly />
@@ -48,22 +53,27 @@
           <label>Stars</label>
           <input id="stars" readonly />
         </div>
+
         <div class="form-group">
           <label>CS</label>
           <input id="cs" readonly />
         </div>
+
         <div class="form-group">
           <label>AR</label>
           <input id="ar" readonly />
         </div>
+
         <div class="form-group">
           <label>OD</label>
           <input id="od" readonly />
         </div>
+
         <div class="form-group">
           <label>BPM</label>
           <input id="bpm" readonly />
         </div>
+
         <div class="form-group">
           <label>Length</label>
           <input id="length" readonly />
@@ -75,42 +85,107 @@
       </div>
     </div>
 
-    <!-- Output section -->
+    <!-- Current Beatmaps (Bounties) -->
     <div class="output-section">
-      <h2 class="section-title">💰 Submitted Bounties (<span id="count">0</span>)</h2>
+      <h2 class="section-title">🗂️ Current Beatmaps (<span id="count">0</span>)</h2>
       <div id="output"></div>
     </div>
-
   </div>
 
+  <!-- Registration Modal -->
   <div id="user-registration-modal">
     <div class="modal-content">
       <h2>👋 Welcome!</h2>
       <p>Please enter a display name to vote and submit maps.</p>
       <form id="registration-form">
-        <input type="text" id="username-input" placeholder="Username (e.g. Cookiezi)" required minlength="3" maxlength="20" autocomplete="off">
-        <br>
+        <input
+          type="text"
+          id="username-input"
+          placeholder="Username (e.g. Cookiezi)"
+          required
+          minlength="3"
+          maxlength="20"
+          autocomplete="off"
+        />
+        <br />
         <button type="submit">Start Browsing</button>
       </form>
     </div>
   </div>
 
   <script>
+
     let bounties = [];
     let currentAudio = null;
-    
+    let editingBountyId = null;
+
+    function extractId(url) {
+      // supports ...#osu/1234567
+      const match = url.match(/osu\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function extractSetId(url) {
+      const match = url.match(/beatmapsets\/(\d+)/);
+      return match ? match[1] : null;
+    }
+
+    function safeStr(x) {
+      return (x === null || x === undefined) ? "" : String(x);
+    }
+
+    function fetchInfo() {
+      const url = document.getElementById("url").value;
+      const id = extractId(url);
+      const setId = extractSetId(url);
+      if (!id) return;
+
+      const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
+      inputs.forEach(k => {
+        const el = document.getElementById(k);
+        el.value = 'Loading...';
+        el.classList.add('loading');
+      });
+
+      fetch("/api/beatmap/" + id)
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById("title").value = d.title || "";
+          document.getElementById("stars").value = safeStr(d.stars ?? "").replace("★", "").replace("⭐", "");
+          document.getElementById("cs").value = d.cs ?? "N/A";
+          document.getElementById("ar").value = d.ar ?? "N/A";
+          document.getElementById("od").value = d.od ?? "N/A";
+          document.getElementById("bpm").value = d.bpm ?? "N/A";
+          document.getElementById("length").value = d.length ?? "N/A";
+
+          const fallbackPreview = setId ? `https://b.ppy.sh/preview/${setId}.mp3` : "/";
+          const fallbackCover = setId ? `https://assets.ppy.sh/beatmaps/${setId}/covers/cover.jpg` : "";
+
+          window.currentBeatmapData = {
+            preview_url: d.preview_url || fallbackPreview,
+            cover_url: d.cover_url || fallbackCover,
+            length: d.length ?? "N/A"
+          };
+
+          inputs.forEach(k => document.getElementById(k).classList.remove('loading'));
+        })
+        .catch(err => {
+          console.error("Beatmap fetch failed:", err);
+          inputs.forEach(k => {
+            const el = document.getElementById(k);
+            el.value = '';
+            el.classList.remove('loading');
+          });
+          window.currentBeatmapData = null;
+          alert("Couldn't fetch beatmap info. Please check the URL.");
+        });
+    }
+
     async function loadBounties() {
       try {
-        const myId = localStorage.getItem('act_user_id');
-        if (!myId) {
-          bounties = [];
-          renderOutput();
-          return;
-        }
-
-        const res = await fetch(`/api/beatmaps/my?user_id=${encodeURIComponent(myId)}&type=bounty`);
+        const res = await fetch('/api/beatmaps/list');
         const data = await res.json();
-        bounties = Array.isArray(data) ? data : [];
+        bounties = (Array.isArray(data) ? data : []).filter(x => x.type === "bounty");
         renderOutput();
       } catch (err) {
         console.error("Failed to load bounties:", err);
@@ -122,10 +197,14 @@
       const count = document.getElementById("count");
       if (!out || !count) return;
 
+      const currentUserId = localStorage.getItem("act_user_id");
+
       count.textContent = bounties.length;
       out.innerHTML = "";
 
       bounties.forEach((m) => {
+        const isOwner = currentUserId && (String(m.submitted_by) === String(currentUserId));
+
         out.innerHTML += `
           <div class="beatmap-card">
             ${m.cover_url ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
@@ -161,8 +240,11 @@
             </div>
 
             <div class="beatmap-actions" style="margin-top: 0.5rem;">
-              <button class="btn-small btn-edit" onclick="editBounty(${m.id})">✏️ Edit</button>
-              <button class="btn-small btn-delete" onclick="deleteBounty(${m.id})">🗑️ Delete</button>
+              ${isOwner ? `
+                <button class="btn-small btn-edit" onclick="editBounty(${m.id})">✏️ Edit</button>
+                <button class="btn-small btn-delete" onclick="deleteBounty(${m.id})">🗑️ Delete</button>
+              ` : ''}
+
               ${m.preview_url && m.preview_url !== "/" ? `
                 <button class="btn-small btn-preview" onclick="playPreview('${m.preview_url}')">🔊 Preview</button>
               ` : ''}
@@ -177,22 +259,36 @@
         if (currentAudio) currentAudio.pause();
         currentAudio = new Audio(previewUrl);
         currentAudio.volume = 0.5;
-        currentAudio.play().catch(() => alert("Could not play preview."));
+        currentAudio.play().catch((e) => {
+          console.error("Preview error:", e);
+          alert("Could not play preview (browser may block it).");
+        });
+
+        // stop after 30s
+        setTimeout(() => {
+          if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+          }
+        }, 30000);
       } catch (e) {
         console.error(e);
         alert("Preview failed.");
       }
     }
 
-    // Fill form, delete old, resubmit
-    async function editBounty(id) {
-      const b = bounties.find(x => x.id === id);
+
+    function editBounty(id) {
+      const b = bounties.find(x => String(x.id) === String(id));
       if (!b) return;
+
+      editingBountyId = b.id;
 
       document.getElementById("url").value = b.url || "";
       document.getElementById("challenge").value = b.skill || "";
       document.getElementById("mods").value = b.mod || "";
       document.getElementById("difficulty").value = b.slot || "";
+
       document.getElementById("title").value = b.title || "";
       document.getElementById("stars").value = b.stars ?? "";
       document.getElementById("cs").value = b.cs ?? "";
@@ -206,23 +302,38 @@
         cover_url: b.cover_url || ""
       };
 
-      await deleteBounty(id, { silentRefresh: true });
+      const btn = document.getElementById('addBountyBtn');
+      btn.innerText = "💾 Save Changes";
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    async function deleteBounty(id, opts = {}) {
-      if (!opts.silentRefresh) {
-        const ok = confirm("Are you sure you want to delete this bounty?");
-        if (!ok) return;
-      }
+    async function deleteBounty(id) {
+      const userId = localStorage.getItem("act_user_id");
+      if (!userId) return alert("Please register/login first.");
+
+      const ok = confirm("Are you sure you want to delete this beatmap?");
+      if (!ok) return;
 
       try {
-        const res = await fetch(`/api/beatmaps/${id}`, { method: "DELETE" });
-        const data = await res.json();
+        const res = await fetch(`/api/beatmaps/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "x-user-id": userId
+          }
+        });
+
+        const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          alert("Delete failed: " + (data.error || "Unknown error"));
+          alert("Delete failed: " + (data.error || "Not allowed"));
           return;
+        }
+
+        if (String(editingBountyId) === String(id)) {
+          editingBountyId = null;
+          document.getElementById('addBountyBtn').innerText = "➕ Submit Bounty";
         }
 
         loadBounties();
@@ -232,52 +343,6 @@
       }
     }
 
-    // Helper
-    function extractId(url) {
-      const match = url.match(/osu\/(\d+)/);
-      return match ? match[1] : null;
-    }
-
-    function fetchInfo() {
-      const id = extractId(document.getElementById("url").value);
-      if (!id) return;
-
-      const inputs = ['title', 'stars', 'cs', 'ar', 'od', 'bpm', 'length'];
-      inputs.forEach(id => {
-        const el = document.getElementById(id);
-        el.value = 'Loading...';
-        el.classList.add('loading');
-      });
-
-      fetch("/api/beatmap/" + id)
-        .then(r => r.json())
-        .then(d => {
-          document.getElementById("title").value = d.title;
-          document.getElementById("stars").value = (d.stars ?? "").toString().replace("★", "");
-          document.getElementById("cs").value = d.cs ?? "N/A";
-          document.getElementById("ar").value = d.ar ?? "N/A";
-          document.getElementById("od").value = d.od ?? "N/A";
-          document.getElementById("bpm").value = d.bpm ?? "N/A";
-          document.getElementById("length").value = d.length ?? "N/A";
-
-          window.currentBeatmapData = {
-            preview_url: d.preview_url || "/",
-            cover_url: d.cover_url || "",
-            download_url: d.url || "#",
-            length: d.length || "N/A"
-          };
-
-          inputs.forEach(id => document.getElementById(id).classList.remove('loading'));
-        })
-        .catch(err => {
-          console.error("Beatmap fetch failed:", err);
-          inputs.forEach(id => {
-            const el = document.getElementById(id);
-            el.value = '';
-            el.classList.remove('loading');
-          });
-        });
-    }
 
     async function addBounty() {
       const userId = localStorage.getItem('act_user_id');
@@ -315,37 +380,51 @@
 
       const btn = document.getElementById('addBountyBtn');
       btn.disabled = true;
-      btn.innerText = "Submitting...";
+
+      const isEdit = editingBountyId !== null;
+      btn.innerText = isEdit ? "Saving..." : "Submitting...";
 
       try {
-        const response = await fetch('/api/beatmaps/submit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const endpoint = isEdit ? `/api/beatmaps/${editingBountyId}` : `/api/beatmaps/submit`;
+        const method = isEdit ? "PUT" : "POST";
+
+        const response = await fetch(endpoint, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            "x-user-id": userId
+          },
           body: JSON.stringify(entry)
         });
 
         const result = await response.json();
 
         if (response.ok) {
-          sendToDiscord(entry);
-          alert('Bounty Submitted Successfully!');
+          if (!isEdit) {
+            sendToDiscord(entry);
+            alert('Bounty Submitted Successfully!');
+          } else {
+            alert('Changes Saved!');
+          }
+
+          editingBountyId = null;
+          btn.innerText = "➕ Submit Bounty";
+
           loadBounties();
 
           ['url','challenge','mods','difficulty','title','stars','cs','ar','od','bpm','length'].forEach(id => {
             document.getElementById(id).value = '';
           });
           window.currentBeatmapData = null;
-
         } else {
           alert('Error: ' + (result.error || "Unknown error"));
         }
-
       } catch (err) {
         console.error(err);
         alert('Failed to connect to server');
       } finally {
         btn.disabled = false;
-        btn.innerText = "➕ Submit Bounty";
+        btn.innerText = (editingBountyId === null) ? "➕ Submit Bounty" : "💾 Save Changes";
       }
     }
 
@@ -357,11 +436,11 @@
       }).catch(err => console.error("Discord error:", err));
     }
 
+
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('url').addEventListener('blur', fetchInfo);
       document.getElementById('addBountyBtn').addEventListener('click', addBounty);
 
-      // IMPORTANT: load after user exists
       loadBounties();
 
       const userId = localStorage.getItem('act_user_id');
@@ -382,16 +461,18 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ display_name: username })
           });
+
           const data = await response.json();
 
           if (response.ok) {
             localStorage.setItem('act_user_id', data.id);
             localStorage.setItem('act_username', data.display_name);
             localStorage.setItem('act_is_admin', data.is_admin);
+
             modal.style.display = 'none';
             alert(`Welcome, ${data.display_name}!`);
 
-            // load their list
+            // refresh list so owner buttons show correctly
             loadBounties();
           } else {
             alert(data.error || 'Registration failed');

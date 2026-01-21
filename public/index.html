@@ -112,13 +112,11 @@
   </div>
 
   <script>
-
     let bounties = [];
     let currentAudio = null;
     let editingBountyId = null;
 
     function extractId(url) {
-      // supports ...#osu/1234567
       const match = url.match(/osu\/(\d+)/);
       return match ? match[1] : null;
     }
@@ -128,6 +126,13 @@
       return match ? match[1] : null;
     }
 
+        function beatmapIdFromOsuUrl(url) {
+      if (!url) return null;
+      const s = String(url);
+      const m = s.match(/#osu\/(\d+)/) || s.match(/osu\/(\d+)/);
+      return m ? m[1] : null;
+    }
+    
     function safeStr(x) {
       return (x === null || x === undefined) ? "" : String(x);
     }
@@ -202,7 +207,8 @@
 
   bounties.forEach((m) => {
     const isOwner = currentUserId && (String(m.submitted_by) === String(currentUserId));
-
+    const bmId = beatmapIdFromOsuUrl(m.url);
+    
     out.innerHTML += `
       <div class="beatmap-card">
         ${m.cover_url ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
@@ -243,6 +249,10 @@
           ${m.preview_url && m.preview_url !== "/" ? `
             <button class="btn-small btn-preview" data-action="preview" data-preview="${m.preview_url}">🔊 Preview</button>
           ` : ''}
+
+           ${bmId ? `
+             <button class="btn-small btn-replay" data-action="replay" data-b="${bmId}">🎬 Replay (JoSu!)</button>
+              ` : ''}
         </div>
       </div>
     `;
@@ -263,6 +273,12 @@
   });
 }
 
+        function openReplayPreview(beatmapId) {
+      // Opens JoSu with the beatmap loaded
+      const url = `https://preview.tryz.id.vn/?b=${encodeURIComponent(beatmapId)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
     function playPreview(previewUrl) {
       try {
         if (currentAudio) currentAudio.pause();
@@ -273,7 +289,6 @@
           alert("Could not play preview (browser may block it).");
         });
 
-        // stop after 30s
         setTimeout(() => {
           if (currentAudio) {
             currentAudio.pause();
@@ -481,7 +496,6 @@
             modal.style.display = 'none';
             alert(`Welcome, ${data.display_name}!`);
 
-            // refresh list so owner buttons show correctly
             loadBounties();
           } else {
             alert(data.error || 'Registration failed');

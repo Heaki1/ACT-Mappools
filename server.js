@@ -12,7 +12,6 @@ const db = require('./database');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123'; // still used for /api/admin/login only
 
 app.set('trust proxy', 1);
 
@@ -26,21 +25,21 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:", "http:"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       connectSrc: ["'self'", "https://osu.ppy.sh", "https://b.ppy.sh", "https://*.onrender.com"],
-      mediaSrc: ["'self'", "https://b.ppy.sh", "https:"]
+      mediaSrc: ["'self'", "https:", "http:"]
     }
   },
   crossOriginEmbedderPolicy: false
 }));
 
-// CORS
+// CORS (PUBLIC) — allow x-user-id for ownership checks + allow PUT
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: function(origin, callback) {
     if (!origin) return callback(null, true);
     callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'OPTIONS', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-id']
 }));
 
 app.use(express.json({ limit: '10kb' }));
@@ -61,6 +60,23 @@ const discordLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development',
 });
 
+
+// Helpers
+
+function getUserId(req) {
+  // Frontend should send: headers: { "x-user-id": localStorage.getItem("act_user_id") }
+  return req.headers['x-user-id'];
+}
+
+function requireUser(req, res) {
+  const userId = getUserId(req);
+  if (!userId) {
+    res.status(401).json({ error: 'User ID required (x-user-id header missing)' });
+    return null;
+  }
+  return userId;
+}
+
 // USER SYSTEM
 
 app.post('/api/users/register', apiLimiter, (req, res) => {
@@ -75,6 +91,8 @@ app.post('/api/users/register', apiLimiter, (req, res) => {
   try {
     const stmt = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
     stmt.run(newId, display_name);
+
+    // no admin concept — keep is_admin for compatibility but always 0
     res.json({ id: newId, display_name, is_admin: 0 });
   } catch (error) {
     console.error('Registration Error:', error);
@@ -93,13 +111,15 @@ app.get('/api/users/:id', apiLimiter, (req, res) => {
   }
 });
 
-// BEATMAP MANAGEMENT
+// BEATMAP MANAGEMENT (PUBLIC)
 
+// Submit
 app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
-  // We accept 'submitted_by_name' to restore the user if DB was wiped (Self-Healing)
+  // submitted_by_name is used for self-healing if DB got wiped
   const {
     title, url, stars, cs, ar, od, bpm, length,
-    slot, mod, skill, notes, cover_url, preview_url,
+    slot, mod, skill, notes,
+    cover_url, preview_url,
     type, submitted_by, submitted_by_name
   } = req.body;
 
@@ -108,41 +128,38 @@ app.post('/api/beatmaps/submit', apiLimiter, (req, res) => {
   }
 
   try {
-    // --- SELF HEALING FIX START ---
+    // SELF-HEALING: restore user if DB wiped
     const userCheck = db.prepare('SELECT id FROM users WHERE id = ?').get(submitted_by);
-
     if (!userCheck) {
       console.log(`⚠️ User ${submitted_by} not found in DB. Auto-restoring...`);
-      const restoreUser = db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)');
-      restoreUser.run(submitted_by, submitted_by_name || 'Unknown User');
+      db.prepare('INSERT INTO users (id, display_name) VALUES (?, ?)').run(
+        submitted_by,
+        submitted_by_name || 'Unknown User'
+      );
     }
-    // --- SELF HEALING FIX END ---
 
     const stmt = db.prepare(`
-      INSERT INTO beatmaps (
-        title, url, stars, cs, ar, od, bpm, length,
-        slot, mod, skill, notes, cover_url, preview_url,
-        type, submitted_by
-      )
+      INSERT INTO beatmaps
+      (title, url, stars, cs, ar, od, bpm, length, slot, mod, skill, notes, cover_url, preview_url, type, submitted_by)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       title, url, stars, cs, ar, od, bpm, length,
-      slot, mod, skill, notes, cover_url, preview_url,
+      slot, mod, skill, notes,
+      cover_url, preview_url,
       type, submitted_by
     );
 
     console.log(`✅ New map submitted: ${title} (ID: ${result.lastInsertRowid})`);
     res.json({ success: true, id: result.lastInsertRowid });
-
   } catch (error) {
     console.error('Submit Error:', error);
     res.status(500).json({ error: 'Failed to submit beatmap. ' + error.message });
   }
 });
 
-// Global list (kept for community page etc.)
+// List
 app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   try {
     const stmt = db.prepare(`
@@ -160,56 +177,73 @@ app.get('/api/beatmaps/list', apiLimiter, (req, res) => {
   }
 });
 
-// privacy endpoint 
-app.get('/api/beatmaps/my', apiLimiter, (req, res) => {
-  const userId = req.query.user_id;
-  const type = req.query.type; // optional: bounty / suggestion
+// Update (Owner-only)
+app.put('/api/beatmaps/:id', apiLimiter, (req, res) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
 
-  if (!userId) return res.status(400).json({ error: 'user_id required' });
+  const id = req.params.id;
+
+  const {
+    title, url, stars, cs, ar, od, bpm, length,
+    slot, mod, skill, notes, cover_url, preview_url, type
+  } = req.body;
 
   try {
-    const stmt = db.prepare(`
-      SELECT 
-        b.*,
-        u.display_name AS submitted_by_name
-      FROM beatmaps b
-      LEFT JOIN users u ON u.id = b.submitted_by
-      WHERE b.submitted_by = ?
-      ${type ? "AND b.type = ?" : ""}
-      ORDER BY b.created_at DESC
-    `);
+    const existing = db.prepare('SELECT id, submitted_by, type FROM beatmaps WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Map not found' });
 
-    const rows = type ? stmt.all(userId, type) : stmt.all(userId);
-    res.json(rows);
+    // Owner-only
+    if (String(existing.submitted_by) !== String(userId)) {
+      return res.status(403).json({ error: 'Not allowed (not owner)' });
+    }
+
+    const safeType = type || existing.type || 'bounty';
+
+    db.prepare(`
+      UPDATE beatmaps
+      SET title = ?, url = ?, stars = ?, cs = ?, ar = ?, od = ?, bpm = ?, length = ?,
+          slot = ?, mod = ?, skill = ?, notes = ?, cover_url = ?, preview_url = ?, type = ?
+      WHERE id = ?
+    `).run(
+      title, url, stars, cs, ar, od, bpm, length,
+      slot, mod, skill, notes, cover_url, preview_url, safeType,
+      id
+    );
+
+    console.log(`✏️ Map ${id} updated by owner ${userId}`);
+    res.json({ success: true });
   } catch (err) {
-    console.error("My beatmaps fetch failed:", err);
-    res.status(500).json({ error: 'Database error' });
+    console.error("Update failed:", err);
+    res.status(500).json({ error: 'Update failed' });
   }
 });
 
-// ADMIN DASHBOARD API 
-
-app.post('/api/admin/login', apiLimiter, (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
-    res.json({ success: true, token: 'admin-session-active' });
-  } else {
-    res.status(401).json({ error: 'Wrong password' });
-  }
-});
-
-// Delete Map 
+// Delete (Owner-only)
 app.delete('/api/beatmaps/:id', apiLimiter, (req, res) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+
+  const id = req.params.id;
+
   try {
+    const existing = db.prepare('SELECT id, submitted_by FROM beatmaps WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Map not found' });
+
+    // Owner-only
+    if (String(existing.submitted_by) !== String(userId)) {
+      return res.status(403).json({ error: 'Not allowed (not owner)' });
+    }
+
     // Delete related data first to respect Foreign Keys
-    db.prepare('DELETE FROM votes WHERE beatmap_id = ?').run(req.params.id);
-    db.prepare('DELETE FROM comments WHERE beatmap_id = ?').run(req.params.id);
+    db.prepare('DELETE FROM votes WHERE beatmap_id = ?').run(id);
+    db.prepare('DELETE FROM comments WHERE beatmap_id = ?').run(id);
 
     // Delete the map
-    const info = db.prepare('DELETE FROM beatmaps WHERE id = ?').run(req.params.id);
+    const info = db.prepare('DELETE FROM beatmaps WHERE id = ?').run(id);
 
     if (info.changes > 0) {
-      console.log(`🗑️ Map ${req.params.id} deleted`);
+      console.log(`🗑️ Map ${id} deleted by owner ${userId}`);
       res.json({ success: true });
     } else {
       res.status(404).json({ error: 'Map not found' });
@@ -303,8 +337,9 @@ app.post('/api/beatmaps/:id/comments', apiLimiter, (req, res) => {
   }
 });
 
+// --------------------
 // OSU API PROXY
-
+// --------------------
 const client_id = process.env.OSU_CLIENT_ID;
 const client_secret = process.env.OSU_CLIENT_SECRET;
 let access_token = null;
@@ -345,6 +380,7 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
     });
 
     const bm = response.data;
+
     res.json({
       title: `${bm.beatmapset.artist} - ${bm.beatmapset.title} [${bm.version}]`,
       stars: bm.difficulty_rating.toFixed(2),
@@ -363,9 +399,11 @@ app.get('/api/beatmap/:id', apiLimiter, async (req, res) => {
   }
 });
 
-
-// Discord Webhook
+// --------------------
+// Discord Webhook (public notifications)
+// --------------------
 const discord_webhook = process.env.DISCORD_WEBHOOK;
+
 app.post('/api/send-discord', discordLimiter, async (req, res) => {
   if (!discord_webhook) return res.status(503).json({ error: 'No webhook' });
 
@@ -394,11 +432,13 @@ app.post('/api/send-discord', discordLimiter, async (req, res) => {
   }
 });
 
-// Serve HTML Pages
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/community', (req, res) => res.sendFile(path.join(__dirname, 'public', 'community.html')));
+
+// If you still want the tournament suggestions page, keep this route.
+// It is NOT admin anymore, just a page name.
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'public', 'dashboard.html')));
 
 // Health Check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', env: process.env.NODE_ENV }));

@@ -7,15 +7,13 @@ const helmet = require("helmet");
 const { v4: uuidv4 } = require("uuid");
 require("dotenv").config();
 
-// Postgres pool
 const db = require("./database");
-
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.set("trust proxy", 1);
 
-// Security headers / CSP
+// CSP
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -80,6 +78,7 @@ app.post("/api/users/register", apiLimiter, async (req, res) => {
 
   try {
     await db.query("INSERT INTO users (id, display_name) VALUES ($1, $2)", [newId, display_name]);
+    console.log(`👤 Registered user: ${display_name} (${newId}) from ${req.ip}`);
     res.json({ id: newId, display_name, is_admin: false });
   } catch (error) {
     console.error("Registration Error:", error);

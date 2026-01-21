@@ -468,6 +468,14 @@ app.get("/community", (req, res) => res.sendFile(path.join(__dirname, "public", 
 app.get("/admin", (req, res) => res.sendFile(path.join(__dirname, "public", "admin.html")));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok", env: process.env.NODE_ENV || "production" }));
+app.get("/api/debug/db", async (req, res) => {
+  try {
+    const r = await db.query("SELECT NOW() as now");
+    res.json({ ok: true, now: r.rows[0].now });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
 
 app.listen(port, "0.0.0.0", () => {
   console.log(`✅ Server running on port ${port}`);

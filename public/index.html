@@ -117,16 +117,16 @@
     let editingBountyId = null;
 
     function extractId(url) {
-      const match = url.match(/osu\/(\d+)/);
+      const match = String(url || "").match(/osu\/(\d+)/);
       return match ? match[1] : null;
     }
 
     function extractSetId(url) {
-      const match = url.match(/beatmapsets\/(\d+)/);
+      const match = String(url || "").match(/beatmapsets\/(\d+)/);
       return match ? match[1] : null;
     }
 
-        function beatmapIdFromOsuUrl(url) {
+    function beatmapIdFromOsuUrl(url) {
       if (!url) return null;
       const s = String(url);
       const m = s.match(/#osu\/(\d+)/) || s.match(/osu\/(\d+)/);
@@ -195,68 +195,69 @@
       }
     }
 
-    function renderOutput() {
-  const out = document.getElementById("output");
-  const count = document.getElementById("count");
-  if (!out || !count) return;
+ function renderOutput() {
+      const out = document.getElementById("output");
+      const count = document.getElementById("count");
+      if (!out || !count) return;
 
-  const currentUserId = localStorage.getItem("act_user_id");
+      const currentUserId = localStorage.getItem("act_user_id");
 
-  count.textContent = bounties.length;
-  out.innerHTML = "";
+      count.textContent = bounties.length;
+      out.innerHTML = "";
 
-  bounties.forEach((m) => {
-    const isOwner = currentUserId && (String(m.submitted_by) === String(currentUserId));
-    const bmId = beatmapIdFromOsuUrl(m.url);
-    
-    out.innerHTML += `
-      <div class="beatmap-card">
-        ${m.cover_url ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" onerror="this.style.display='none'">` : ''}
+      bounties.forEach((m) => {
+        const isOwner = currentUserId && (String(m.submitted_by) === String(currentUserId));
+        const bmId = beatmapIdFromOsuUrl(m.url);
 
-        <div class="beatmap-header">
-          <div>
-            <span class="slot-badge">${m.slot || ''}</span>
-          </div>
-          <div style="font-size: 0.9rem; color: #94a3b8;">${m.mod || ''}</div>
-        </div>
+        out.innerHTML += `
+          <div class="beatmap-card">
+            ${m.cover_url ? `<img src="${m.cover_url}" alt="Cover" class="cover-image" data-cover="1">` : ''}
 
-        <a href="${m.url}" target="_blank" class="beatmap-title" style="text-decoration: none; color: #f1f5f9;">
-          ${m.title || 'Unknown title'}
-        </a>
+            <div class="beatmap-header">
+              <div>
+                <span class="slot-badge">${m.slot || ''}</span>
+              </div>
+              <div style="font-size: 0.9rem; color: #94a3b8;">${m.mod || ''}</div>
+            </div>
 
-        <div class="beatmap-stats">
-          <div class="stat-item"><span class="stat-label">Stars</span><span class="stat-value">${m.stars ?? 'N/A'}</span></div>
-          <div class="stat-item"><span class="stat-label">CS</span><span class="stat-value">${m.cs ?? 'N/A'}</span></div>
-          <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${m.ar ?? 'N/A'}</span></div>
-          <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${m.od ?? 'N/A'}</span></div>
-          <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${m.bpm ?? 'N/A'}</span></div>
-          <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${m.length ?? 'N/A'}</span></div>
-        </div>
+            <a href="${m.url}" target="_blank" rel="noopener noreferrer"
+               class="beatmap-title" style="text-decoration: none; color: #f1f5f9;">
+              ${m.title || 'Unknown title'}
+            </a>
 
-        <div style="margin-top: 0.5rem;">
-          ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
-          <div style="margin-top: 0.25rem; font-size: 0.85rem; color: #60a5fa;">
-            👤 Submitted by: ${m.submitted_by_name || 'Unknown'}
-          </div>
-        </div>
+            <div class="beatmap-stats">
+              <div class="stat-item"><span class="stat-label">Stars</span><span class="stat-value">${m.stars ?? 'N/A'}</span></div>
+              <div class="stat-item"><span class="stat-label">CS</span><span class="stat-value">${m.cs ?? 'N/A'}</span></div>
+              <div class="stat-item"><span class="stat-label">AR</span><span class="stat-value">${m.ar ?? 'N/A'}</span></div>
+              <div class="stat-item"><span class="stat-label">OD</span><span class="stat-value">${m.od ?? 'N/A'}</span></div>
+              <div class="stat-item"><span class="stat-label">BPM</span><span class="stat-value">${m.bpm ?? 'N/A'}</span></div>
+              <div class="stat-item"><span class="stat-label">Length</span><span class="stat-value">${m.length ?? 'N/A'}</span></div>
+            </div>
 
-        <div class="beatmap-actions" style="margin-top: 0.5rem;">
-          ${isOwner ? `
-            <button class="btn-small btn-edit" data-action="edit" data-id="${m.id}">✏️ Edit</button>
-            <button class="btn-small btn-delete" data-action="delete" data-id="${m.id}">🗑️ Delete</button>
-          ` : ''}
+            <div style="margin-top: 0.5rem;">
+              ${m.skill ? `<span class="skill-tag">🎯 ${m.skill}</span>` : ''}
+              <div style="margin-top: 0.25rem; font-size: 0.85rem; color: #60a5fa;">
+                👤 Submitted by: ${m.submitted_by_name || 'Unknown'}
+              </div>
+            </div>
 
-          ${m.preview_url && m.preview_url !== "/" ? `
-            <button class="btn-small btn-preview" data-action="preview" data-preview="${m.preview_url}">🔊 Preview</button>
-          ` : ''}
-
-           ${bmId ? `
-             <button class="btn-small btn-replay" data-action="replay" data-b="${bmId}">🎬 Replay (JoSu!)</button>
+            <div class="beatmap-actions" style="margin-top: 0.5rem;">
+              ${isOwner ? `
+                <button class="btn-small btn-edit" data-action="edit" data-id="${m.id}">✏️ Edit</button>
+                <button class="btn-small btn-delete" data-action="delete" data-id="${m.id}">🗑️ Delete</button>
               ` : ''}
-        </div>
-      </div>
-    `;
-  });
+
+              ${m.preview_url && m.preview_url !== "/" ? `
+                <button class="btn-small btn-preview" data-action="preview" data-preview="${m.preview_url}">🔊 Preview</button>
+              ` : ''}
+
+              ${bmId ? `
+                <button class="btn-small btn-replay" data-action="replay" data-b="${bmId}">🎬 Replay (JoSu!)</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      });
 
   out.querySelectorAll("button[data-action]").forEach((btn) => {
     btn.addEventListener("click", () => {
